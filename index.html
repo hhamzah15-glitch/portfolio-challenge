@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Portfolio Challenge — Maybank Wealth Cambodia</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ═══════════════════════════
+   GLOBAL
+═══════════════════════════ */
+:root{
+  --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c27; --border:#2a2a3d;
+  --gold:#f0b429; --green:#00d084; --red:#ff4757; --blue:#4f8ef7;
+  --text:#e8e8f0; --text-dim:#7070a0; --fd:#4f8ef7; --eq:#f0b429;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow-x:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(79,142,247,.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(79,142,247,.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;}
+.view{display:none;position:relative;z-index:1;}
+.view.active{display:flex;}
+.pos{color:var(--green);} .neg{color:var(--red);}
+
+/* Shared */
+.field-label{font-size:.72rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;font-weight:500;display:block;margin-bottom:.35rem;}
+.field-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;transition:border-color .2s;}
+.field-input:focus{border-color:var(--gold);}
+.field-input::placeholder{color:var(--text-dim);}
+.btn-gold{background:var(--gold);color:#0a0a0f;border:none;border-radius:8px;padding:.95rem;font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:.1em;cursor:pointer;width:100%;transition:opacity .2s,transform .1s;}
+.btn-gold:hover{opacity:.9;transform:translateY(-1px);}
+.btn-gold:active{transform:translateY(0);}
+.btn-gold:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.8rem;width:100%;max-width:380px;display:flex;flex-direction:column;gap:1.1rem;}
+.panel-label{font-size:.68rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:1rem;}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--green);color:#0a0a0f;padding:.6rem 1.4rem;border-radius:8px;font-weight:600;font-size:.83rem;transition:transform .3s;z-index:999;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--red);color:white;}
+
+/* ═══════════════════════════
+   LANDING
+═══════════════════════════ */
+#landing{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;gap:2.5rem;}
+.land-logo{font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:.35em;color:var(--text-dim);text-align:center;}
+.land-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.2rem,14vw,6rem);line-height:.88;text-align:center;letter-spacing:.02em;}
+.land-title span{color:var(--gold);display:block;}
+.land-sub{color:var(--text-dim);font-size:.85rem;text-align:center;letter-spacing:.06em;}
+.role-grid{display:flex;flex-direction:column;gap:.9rem;width:100%;max-width:380px;}
+.role-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.3rem 1.5rem;display:flex;align-items:center;gap:1.2rem;cursor:pointer;transition:border-color .2s,transform .15s,background .2s;text-align:left;width:100%;}
+.role-card:hover{border-color:var(--gold);background:rgba(240,180,41,.04);transform:translateY(-2px);}
+.role-card:active{transform:translateY(0);}
+.role-icon{font-size:2rem;flex-shrink:0;width:2.5rem;text-align:center;}
+.role-info{flex:1;}
+.role-name{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.05em;color:var(--text);line-height:1;}
+.role-desc{font-size:.75rem;color:var(--text-dim);margin-top:.2rem;line-height:1.4;}
+.role-arrow{color:var(--text-dim);font-size:1.2rem;flex-shrink:0;transition:color .2s;}
+.role-card:hover .role-arrow{color:var(--gold);}
+
+/* ═══════════════════════════
+   PLAYER — JOIN
+═══════════════════════════ */
+#playerJoin{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;gap:1.8rem;}
+.game-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,12vw,5rem);line-height:.9;text-align:center;letter-spacing:.02em;}
+.game-title span{color:var(--gold);display:block;}
+.subtitle{color:var(--text-dim);font-size:.82rem;text-align:center;letter-spacing:.06em;}
+
+/* ═══════════════════════════
+   PLAYER — WAITING
+═══════════════════════════ */
+#playerWaiting{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1.8rem;padding:2rem;text-align:center;}
+.wait-icon{font-size:3.5rem;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.wait-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:.05em;color:var(--gold);}
+.wait-sub{color:var(--text-dim);font-size:.88rem;max-width:280px;line-height:1.6;}
+.player-chips{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;max-width:320px;}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:.28rem .75rem;font-size:.78rem;animation:popIn .3s ease;}
+@keyframes popIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+
+/* ═══════════════════════════
+   PLAYER — GAME
+═══════════════════════════ */
+#playerGame{flex-direction:column;padding:1.2rem;gap:1.2rem;max-width:480px;margin:0 auto;padding-bottom:2rem;min-height:100vh;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;}
+.player-badge{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.35rem .8rem;font-size:.82rem;font-weight:500;}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.round-badge{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--gold);letter-spacing:.05em;}
+.portfolio-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;position:relative;overflow:hidden;}
+.portfolio-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent);}
+.p-label{font-size:.68rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:.4rem;}
+.p-value{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,8vw,2.8rem);line-height:1;}
+.p-change{margin-top:.3rem;font-size:.88rem;font-weight:500;font-family:'DM Mono',monospace;min-height:1.2em;}
+.p-breakdown{display:flex;justify-content:space-between;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--border);gap:.5rem;}
+.p-bitem .b-label{font-size:.65rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:.2rem;}
+.p-bitem .b-val{font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500;}
+.returns-pills{display:flex;gap:.6rem;}
+.pill{border-radius:8px;padding:.45rem .85rem;font-family:'DM Mono',monospace;font-size:.82rem;font-weight:500;display:flex;align-items:center;gap:.45rem;flex:1;justify-content:center;}
+.pill-fd{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.25);color:var(--fd);}
+.pill-eq{background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.25);color:var(--eq);}
+.pdot{width:6px;height:6px;border-radius:50%;}
+.event-card{border-radius:12px;padding:1.1rem;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--gold);display:none;}
+.event-card.show{display:block;}
+.event-card.result-card{border-left-color:var(--green);}
+.event-card.result-card.neg-result{border-left-color:var(--red);}
+.event-card.briefing-card{border-left-color:var(--gold);}
+.ev-tag{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:.35rem;}
+.ev-tag.result-tag{color:var(--green);}
+.ev-tag.result-tag.neg{color:var(--red);}
+.ev-headline{font-size:.92rem;font-weight:500;line-height:1.45;margin-bottom:.4rem;}
+.ev-detail{font-size:.78rem;color:var(--text-dim);line-height:1.5;font-style:italic;}
+.year-divider{display:flex;align-items:center;gap:.75rem;opacity:.4;}
+.year-divider-line{flex:1;height:1px;background:var(--border);}
+.year-divider-text{font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;white-space:nowrap;}
+.alloc-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;}
+.alloc-title{font-size:.7rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:1.1rem;}
+.alloc-item{display:flex;flex-direction:column;gap:.55rem;margin-bottom:1.1rem;}
+.alloc-header{display:flex;justify-content:space-between;align-items:center;}
+.alloc-name{font-size:.88rem;font-weight:600;display:flex;align-items:center;gap:.45rem;}
+.adot{width:8px;height:8px;border-radius:50%;}
+.alloc-pct{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:.05em;color:var(--gold);}
+.slider-wrap{position:relative;height:6px;background:var(--surface2);border-radius:3px;}
+.slider-fill{height:100%;border-radius:3px;transition:width .12s;}
+input[type=range]{position:absolute;top:50%;transform:translateY(-50%);left:0;width:100%;opacity:0;cursor:pointer;height:28px;margin:0;}
+.alloc-amt{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--text-dim);text-align:right;}
+.split-bar{height:30px;border-radius:8px;overflow:hidden;display:flex;margin:.2rem 0 .8rem;}
+.split-fd{background:var(--fd);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;color:white;overflow:hidden;transition:width .2s;}
+.split-eq{background:var(--eq);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;color:#0a0a0f;overflow:hidden;transition:width .2s;}
+.confirm-btn{background:var(--gold);color:#0a0a0f;border:none;border-radius:10px;padding:.95rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.1em;cursor:pointer;width:100%;transition:all .2s;}
+.confirm-btn:hover{opacity:.9;}
+.confirm-btn:disabled{background:var(--surface2);color:var(--text-dim);cursor:not-allowed;}
+.submitted-msg{text-align:center;font-size:.82rem;color:var(--green);padding:.75rem;background:rgba(0,208,132,.08);border:1px solid rgba(0,208,132,.2);border-radius:8px;display:none;}
+.locked-msg{text-align:center;font-size:.8rem;color:var(--text-dim);padding:.75rem;background:var(--surface2);border-radius:8px;display:none;}
+.history-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.2rem;display:none;}
+.h-title{font-size:.7rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:.9rem;}
+.h-table{width:100%;border-collapse:collapse;font-size:.75rem;font-family:'DM Mono',monospace;}
+.h-table th{text-align:left;color:var(--text-dim);font-weight:400;padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.68rem;}
+.h-table td{padding:.38rem 0;border-bottom:1px solid rgba(42,42,61,.5);}
+.h-table tr:last-child td{border-bottom:none;}
+
+/* ═══════════════════════════
+   PLAYER — GAME OVER
+═══════════════════════════ */
+#playerGameOver{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;gap:1.5rem;text-align:center;}
+.go-trophy{font-size:4rem;}
+.go-rank{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:var(--gold);line-height:1;}
+.go-lbl{font-size:.7rem;letter-spacing:.18em;color:var(--text-dim);text-transform:uppercase;}
+.go-value{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;}
+.go-return{font-size:.95rem;font-weight:500;font-family:'DM Mono',monospace;}
+.go-sharpe-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.4rem;max-width:320px;}
+.go-msg{color:var(--text-dim);font-size:.82rem;max-width:280px;line-height:1.65;}
+
+/* ═══════════════════════════
+   COVID OVERLAYS
+═══════════════════════════ */
+.covid-overlay{display:none;position:fixed;inset:0;z-index:100;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem;text-align:center;}
+.covid-overlay.show{display:flex;}
+#covidCrisis{background:rgba(5,5,10,.95);}
+#covidAbyss{background:rgba(5,5,10,.97);}
+#covidVaccine{background:rgba(5,5,10,.95);}
+.crisis-flash{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,20vw,7rem);color:var(--red);line-height:1;animation:flashRed 1s ease-in-out infinite alternate;}
+@keyframes flashRed{from{text-shadow:0 0 20px rgba(255,71,87,.4)}to{text-shadow:0 0 60px rgba(255,71,87,1),0 0 100px rgba(255,71,87,.6)}}
+.crisis-label{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.15em;color:var(--red);}
+.crisis-headline{font-size:1rem;font-weight:500;line-height:1.5;max-width:320px;}
+.crisis-sub{font-size:.82rem;color:var(--text-dim);line-height:1.6;max-width:300px;}
+.crisis-timer{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:.05em;}
+.crisis-timer-lbl{font-size:.72rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;}
+.btn-red{background:var(--red);color:white;border:none;border-radius:8px;padding:.95rem 2rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.1em;cursor:pointer;width:100%;max-width:320px;}
+.abyss-pct{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,22vw,8rem);color:var(--red);line-height:1;}
+.abyss-lbl{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.2em;color:rgba(255,71,87,.7);}
+.abyss-hl{font-size:.95rem;font-weight:500;line-height:1.5;max-width:300px;color:var(--text-dim);}
+.watch-only{font-size:.75rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;border:1px solid var(--border);border-radius:6px;padding:.4rem .8rem;}
+.vaccine-icon{font-size:4rem;animation:bounce 1s ease-in-out infinite alternate;}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-15px)}}
+.vaccine-pct{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,18vw,7rem);color:var(--green);line-height:1;animation:glowG 1.5s ease-in-out infinite alternate;}
+@keyframes glowG{from{text-shadow:0 0 20px rgba(0,208,132,.3)}to{text-shadow:0 0 60px rgba(0,208,132,.8)}}
+.vaccine-lbl{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.15em;color:var(--green);}
+.vaccine-hl{font-size:.95rem;line-height:1.5;max-width:300px;font-weight:500;}
+.vaccine-sub{font-size:.8rem;color:var(--text-dim);line-height:1.6;max-width:280px;}
+
+/* ═══════════════════════════
+   ADMIN — LOGIN
+═══════════════════════════ */
+#adminLogin{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;gap:1.8rem;}
+.admin-login-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,10vw,3.5rem);line-height:.9;text-align:center;}
+.admin-login-title span{color:var(--gold);display:block;}
+
+/* ═══════════════════════════
+   ADMIN — PANEL
+═══════════════════════════ */
+#adminPanel{flex-direction:column;padding:1.4rem;gap:1.3rem;max-width:1000px;margin:0 auto;}
+.admin-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;}
+.ah-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.05em;color:var(--gold);}
+.ah-sub{font-size:.78rem;color:var(--text-dim);margin-top:.15rem;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.75rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;}
+.stat-lbl{font-size:.63rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:.35rem;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:var(--text);letter-spacing:.02em;line-height:1;}
+.ctrl-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;}
+.year-hero{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;}
+.year-big{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:var(--text);line-height:1;}
+.year-big span{color:var(--gold);}
+.year-real{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text-dim);margin-top:.1rem;}
+.year-event-nm{font-size:.88rem;color:var(--text-dim);font-style:italic;margin-top:.2rem;}
+.returns-pair{display:flex;gap:.75rem;}
+.ret-card{background:var(--surface2);border-radius:10px;padding:.75rem 1.1rem;min-width:110px;}
+.ret-asset{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.25rem;}
+.ret-val{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;line-height:1;}
+.sub-bar{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem;align-items:center;}
+.sub-dot{width:11px;height:11px;border-radius:50%;background:var(--border);transition:background .3s;}
+.sub-dot.done{background:var(--green);} .sub-dot.crisis-d{background:var(--gold);}
+.sub-count{font-size:.75rem;color:var(--text-dim);margin-left:.3rem;}
+.ctrl-btns{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:1.2rem;}
+.btn-ctrl{flex:1;min-width:110px;border:none;border-radius:8px;padding:.85rem .9rem;font-family:'Bebas Neue',sans-serif;font-size:.92rem;letter-spacing:.07em;cursor:pointer;transition:all .2s;}
+.btn-ctrl:hover{opacity:.85;transform:translateY(-1px);}
+.btn-ctrl:disabled{opacity:.3;cursor:not-allowed;transform:none;}
+.btn-open{background:var(--green);color:#08080f;}
+.btn-lock{background:var(--red);color:white;}
+.btn-next{background:var(--gold);color:#08080f;}
+.btn-end{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);}
+.btn-reset{background:rgba(255,71,87,.15);border:1px solid rgba(255,71,87,.3);color:var(--red);}
+.btn-crisis{background:#ff6b35;color:white;}
+.btn-abyss{background:#c0392b;color:white;}
+.btn-vaccine{background:var(--green);color:#08080f;}
+.covid-zone{background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.2);border-radius:10px;padding:1rem;margin-top:1rem;display:none;}
+.covid-zone.active{display:block;}
+.covid-title{font-size:.7rem;letter-spacing:.15em;color:var(--red);text-transform:uppercase;margin-bottom:.75rem;font-weight:600;}
+.headline-preview{background:var(--surface2);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:.9rem 1.1rem;margin-top:1rem;}
+.hp-lbl{font-size:.62rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:.25rem;}
+.hp-before{font-size:.8rem;color:var(--text);line-height:1.5;margin-bottom:.6rem;}
+.hp-after{font-size:.78rem;color:var(--text-dim);line-height:1.5;font-style:italic;}
+.timeline-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;overflow-x:auto;}
+.timeline{display:flex;gap:.35rem;padding-bottom:.4rem;}
+.tl-yr{width:38px;text-align:center;cursor:pointer;}
+.tl-dot{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-family:'DM Mono',monospace;color:var(--text-dim);background:var(--surface2);transition:all .2s;}
+.tl-dot:hover{border-color:var(--gold);}
+.tl-dot.done{border-color:var(--green);background:rgba(0,208,132,.08);color:var(--green);}
+.tl-dot.current{border-color:var(--gold);background:rgba(240,180,41,.12);color:var(--gold);}
+.tl-dot.upcoming{opacity:.35;}
+.tl-lbl{font-size:.48rem;font-family:'DM Mono',monospace;text-align:center;margin-top:.2rem;}
+.lb-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;}
+.lb-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+.lb-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+.lb-table th{text-align:left;color:var(--text-dim);font-weight:400;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:.45rem .7rem;border-bottom:1px solid var(--border);}
+.lb-table td{padding:.65rem .7rem;border-bottom:1px solid rgba(34,34,56,.6);}
+.lb-table tr:last-child td{border-bottom:none;}
+.lb-rank{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--text-dim);}
+.lb-rank.g{color:#FFD700;} .lb-rank.s{color:#C0C0C0;} .lb-rank.b{color:#CD7F32;}
+.lb-name{font-weight:600;} .lb-val{font-family:'DM Mono',monospace;color:var(--gold);font-size:.88rem;}
+.lb-ret{font-family:'DM Mono',monospace;font-size:.83rem;} .lb-sharpe{font-family:'DM Mono',monospace;font-size:.83rem;color:var(--blue);}
+.mini-bar{height:6px;border-radius:3px;overflow:hidden;background:var(--border);display:flex;width:80px;margin-bottom:.2rem;}
+.mfd{background:var(--fd);} .meq{background:var(--eq);}
+.alloc-txt{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-dim);}
+.crisis-badge{background:rgba(255,107,53,.15);border:1px solid rgba(255,107,53,.3);color:#ff6b35;font-size:.68rem;border-radius:4px;padding:.1rem .4rem;margin-left:.4rem;}
+.pcards-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem;}
+.pcard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.65rem;margin-top:.75rem;}
+.pcard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.9rem;position:relative;overflow:hidden;transition:border-color .2s;}
+.pcard.submitted{border-color:var(--green);} .pcard.crisis-done{border-color:#ff6b35;}
+.pcard .check{position:absolute;top:.5rem;right:.6rem;font-size:.75rem;}
+.pcard .pn{font-weight:600;font-size:.88rem;margin-bottom:.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcard .pv{font-family:'DM Mono',monospace;font-size:.82rem;color:var(--gold);margin-bottom:.4rem;}
+.pcard .pb{height:4px;border-radius:2px;overflow:hidden;background:var(--border);display:flex;margin-bottom:.25rem;}
+.pfd{background:var(--fd);} .peq{background:var(--eq);}
+.pcard .pa{font-size:.68rem;color:var(--text-dim);font-family:'DM Mono',monospace;}
+
+/* Reset confirm modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(5,5,10,.85);z-index:200;align-items:center;justify-content:center;padding:2rem;}
+.modal-bg.show{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:360px;width:100%;display:flex;flex-direction:column;gap:1rem;text-align:center;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--red);}
+.modal-sub{font-size:.85rem;color:var(--text-dim);line-height:1.55;}
+.modal-btns{display:flex;gap:.75rem;}
+.modal-cancel{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:.8rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em;cursor:pointer;}
+.modal-confirm{flex:1;background:var(--red);border:none;color:white;border-radius:8px;padding:.8rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em;cursor:pointer;}
+
+/* ═══════════════════════════
+   TV LEADERBOARD
+═══════════════════════════ */
+#tvView{flex-direction:column;height:100vh;padding:1.2rem;gap:.9rem;overflow:hidden;}
+.tv-header{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;}
+.tv-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.2rem,2.5vw,2rem);letter-spacing:.08em;}
+.tv-title span{color:var(--gold);}
+.tv-sub{font-size:clamp(.55rem,1vw,.72rem);color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-top:.1rem;}
+.tv-year{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,7vw,5rem);color:var(--gold);letter-spacing:.03em;line-height:1;text-align:center;}
+.tv-event{font-size:clamp(.55rem,1.2vw,.85rem);color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;text-align:center;margin-top:.1rem;}
+.tv-join{font-size:clamp(.5rem,1vw,.72rem);color:var(--text-dim);text-align:right;margin-top:.15rem;}
+.ret-banner{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem 1.2rem;align-items:center;gap:1.2rem;flex-wrap:wrap;position:relative;z-index:1;}
+.ret-banner.show{display:flex;}
+.rb-year{font-family:'Bebas Neue',sans-serif;font-size:clamp(1rem,2vw,1.6rem);color:var(--text-dim);letter-spacing:.05em;flex-shrink:0;}
+.rb-item{display:flex;align-items:center;gap:.6rem;}
+.rb-lbl{font-size:clamp(.55rem,1vw,.72rem);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;}
+.rb-val{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.2rem,2.5vw,2rem);line-height:1;}
+.rb-hl{flex:1;font-size:clamp(.6rem,1.1vw,.8rem);color:var(--text);font-style:italic;border-left:2px solid var(--gold);padding-left:.9rem;line-height:1.45;min-width:0;}
+.crisis-banner{display:none;border-radius:10px;padding:.8rem 1.2rem;align-items:center;gap:1.2rem;background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.3);position:relative;z-index:1;}
+.crisis-banner.show{display:flex;}
+.cb-flash{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,3.5rem);color:var(--red);animation:flashRed 1s ease-in-out infinite alternate;flex-shrink:0;}
+.cb-text{flex:1;}
+.cb-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(.9rem,2vw,1.4rem);color:var(--red);letter-spacing:.08em;}
+.cb-sub{font-size:clamp(.6rem,1.1vw,.8rem);color:var(--text-dim);margin-top:.15rem;line-height:1.4;}
+.cb-timer{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,3.5rem);color:var(--gold);flex-shrink:0;}
+.lb-main{flex:1;display:flex;flex-direction:column;gap:.4rem;overflow:hidden;min-height:0;position:relative;z-index:1;}
+.lb-row{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.55rem 1rem;gap:1rem;flex:1;position:relative;overflow:hidden;transition:all .6s cubic-bezier(.4,0,.2,1);}
+.lb-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.lb-row.r1{border-color:rgba(255,215,0,.35);background:rgba(255,215,0,.04);}
+.lb-row.r1::before{background:#FFD700;} .lb-row.r2::before{background:#C0C0C0;} .lb-row.r3::before{background:#CD7F32;}
+.row-rank{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.2rem,2.5vw,2rem);color:var(--text-dim);width:2rem;text-align:center;flex-shrink:0;line-height:1;}
+.row-rank.g{color:#FFD700;} .row-rank.s{color:#C0C0C0;} .row-rank.b{color:#CD7F32;}
+.row-name{font-weight:600;font-size:clamp(.75rem,1.5vw,1.1rem);flex:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-bar-wrap{flex:3;display:flex;align-items:center;gap:.5rem;min-width:0;}
+.row-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.row-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--fd),var(--eq));transition:width .8s cubic-bezier(.4,0,.2,1);min-width:2px;}
+.row-alloc{flex:1.5;display:flex;flex-direction:column;gap:.2rem;}
+.row-alloc-bar{height:5px;border-radius:3px;overflow:hidden;background:var(--border);display:flex;}
+.rab-fd{background:var(--fd);} .rab-eq{background:var(--eq);}
+.row-alloc-txt{font-family:'DM Mono',monospace;font-size:clamp(.48rem,.9vw,.65rem);color:var(--text-dim);}
+.row-sharpe{font-family:'DM Mono',monospace;font-size:clamp(.65rem,1.2vw,.85rem);color:var(--blue);flex-shrink:0;text-align:center;width:3.5rem;}
+.row-return{font-family:'DM Mono',monospace;font-size:clamp(.65rem,1.2vw,.85rem);flex-shrink:0;text-align:right;width:4rem;}
+.row-value{font-family:'Bebas Neue',sans-serif;font-size:clamp(.9rem,2vw,1.6rem);color:var(--gold);letter-spacing:.02em;flex-shrink:0;text-align:right;width:8rem;}
+.crisis-tag{background:rgba(255,71,87,.15);border:1px solid rgba(255,71,87,.3);color:var(--red);font-size:clamp(.45rem,.8vw,.6rem);border-radius:3px;padding:.05rem .3rem;margin-left:.3rem;font-family:'DM Mono',monospace;}
+.round-timer-bar{height:5px;border-radius:3px;overflow:hidden;background:var(--surface2);margin:0 .2rem;position:relative;z-index:1;}
+.round-timer-fill{height:100%;border-radius:3px;background:var(--gold);transition:width 1s linear;width:100%;}
+.round-timer-fill.urgent{background:var(--red);}
+.round-timer-label{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:clamp(1rem,2vw,1.5rem);color:var(--gold);letter-spacing:.1em;position:relative;z-index:1;}
+.round-timer-label.urgent{color:var(--red);animation:flashRed .5s ease-in-out infinite alternate;}
+.tv-footer{display:flex;justify-content:space-between;align-items:center;padding:0 .4rem;position:relative;z-index:1;}
+.ft-stat{font-size:clamp(.5rem,.9vw,.72rem);color:var(--text-dim);font-family:'DM Mono',monospace;}
+.ft-stat span{color:var(--text);}
+#tvGameOver{display:none;position:fixed;inset:0;background:rgba(4,4,12,.93);z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;text-align:center;padding:2rem;}
+#tvGameOver.show{display:flex;}
+.go-big{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,12vw,9rem);letter-spacing:.05em;color:var(--gold);animation:glow 2s ease-in-out infinite alternate;}
+@keyframes glow{from{text-shadow:0 0 20px rgba(240,180,41,.3)}to{text-shadow:0 0 80px rgba(240,180,41,.8)}}
+.go-cols{display:flex;gap:3rem;align-items:center;flex-wrap:wrap;justify-content:center;}
+.go-col{text-align:center;}
+.go-col-lbl{font-size:clamp(.55rem,1vw,.72rem);letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:.4rem;}
+.go-winner{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,6vw,4.5rem);color:#FFD700;letter-spacing:.08em;}
+.go-val{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.5rem,4vw,3.5rem);}
+.go-sharpe-w{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.2rem,3vw,2.5rem);color:var(--blue);}
+.go-divider{width:2px;height:4rem;background:var(--border);}
+.go-msg-tv{font-size:clamp(.65rem,1.3vw,.95rem);color:var(--text-dim);max-width:700px;line-height:1.65;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════
+     LANDING
+═══════════════════════════ -->
+<div id="landing" class="view active">
+  <div class="land-logo">MAYBANK WEALTH · CAMBODIA</div>
+  <div class="land-title">PORTFOLIO<span>CHALLENGE</span></div>
+  <div class="land-sub">20 YEARS · REAL MARKETS · REAL DECISIONS</div>
+  <div class="role-grid">
+    <button class="role-card" onclick="selectRole('player')">
+      <div class="role-icon">🎮</div>
+      <div class="role-info">
+        <div class="role-name">PLAYER</div>
+        <div class="role-desc">Join the game and manage your $1,000,000 portfolio across 20 years of real markets.</div>
+      </div>
+      <div class="role-arrow">›</div>
+    </button>
+    <button class="role-card" onclick="selectRole('admin')">
+      <div class="role-icon">🎛️</div>
+      <div class="role-info">
+        <div class="role-name">FACILITATOR</div>
+        <div class="role-desc">Control the game, advance rounds, trigger events, and manage the session.</div>
+      </div>
+      <div class="role-arrow">›</div>
+    </button>
+    <button class="role-card" onclick="selectRole('tv')">
+      <div class="role-icon">📺</div>
+      <div class="role-info">
+        <div class="role-name">LEADERBOARD</div>
+        <div class="role-desc">Live TV display for the projector. Auto-connects to the active session.</div>
+      </div>
+      <div class="role-arrow">›</div>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     PLAYER — JOIN
+═══════════════════════════ -->
+<div id="playerJoin" class="view">
+  <div class="game-title">PORTFOLIO<span>CHALLENGE</span></div>
+  <div class="subtitle">20 YEARS · REAL MARKETS · REAL DECISIONS</div>
+  <div class="card">
+    <div><label class="field-label">Your Name</label><input class="field-input" id="pName" placeholder="e.g. Sophea" maxlength="20"/></div>
+    <button class="btn-gold" onclick="playerJoin()">JOIN GAME →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     PLAYER — WAITING
+═══════════════════════════ -->
+<div id="playerWaiting" class="view">
+  <div class="wait-icon">⏳</div>
+  <div class="wait-title">You're In!</div>
+  <div class="wait-sub">The facilitator will start shortly. Get ready to invest $1,000,000.</div>
+  <div class="player-chips" id="pChips"></div>
+</div>
+
+<!-- ═══════════════════════════
+     PLAYER — GAME
+═══════════════════════════ -->
+<div id="playerGame" class="view">
+  <div class="top-bar">
+    <div class="player-badge"><span class="pulse"></span><span id="pNameDisp">Player</span></div>
+    <div class="round-badge">YEAR <span id="pRoundDisp">1</span></div>
+  </div>
+  <div class="portfolio-card">
+    <div class="p-label">Portfolio Value</div>
+    <div class="p-value" id="pVal">$1,000,000</div>
+    <div class="p-change" id="pChg">&nbsp;</div>
+    <div class="p-breakdown">
+      <div class="p-bitem"><div class="b-label" style="color:var(--fd)">Fixed Deposit</div><div class="b-val" id="pFdV">$500,000</div></div>
+      <div class="p-bitem"><div class="b-label" style="color:var(--eq)">Global Equities</div><div class="b-val" id="pEqV">$500,000</div></div>
+      <div class="p-bitem"><div class="b-label">Rank</div><div class="b-val" id="pRankDisp">—</div></div>
+    </div>
+  </div>
+  <!-- PRIOR YEAR RESULT CARD — only shown from Year 2 onwards -->
+  <div class="event-card result-card" id="pResultCard" style="display:none">
+    <div class="ev-tag result-tag" id="pResultTag">LAST YEAR RESULT</div>
+    <div class="returns-pills" style="margin-bottom:.7rem">
+      <div class="pill pill-fd"><div class="pdot" style="background:var(--fd)"></div>FD: <strong id="pLastFd">—</strong></div>
+      <div class="pill pill-eq"><div class="pdot" style="background:var(--eq)"></div>EQ: <strong id="pLastEq">—</strong></div>
+    </div>
+    <div class="ev-headline" id="pResultHl"></div>
+  </div>
+
+  <!-- CURRENT YEAR BRIEFING CARD — always shown -->
+  <div class="event-card briefing-card show" id="pBriefingCard">
+    <div class="ev-tag" id="pBriefingTag">MARKET BRIEFING — YEAR 1</div>
+    <div class="ev-headline" id="pBriefingHl"></div>
+  </div>
+  <div class="alloc-section">
+    <div class="alloc-title" id="pAllocTitle">Set your allocation for this year</div>
+    <div class="alloc-item">
+      <div class="alloc-header"><div class="alloc-name"><div class="adot" style="background:var(--fd)"></div>Fixed Deposit</div><div class="alloc-pct" id="pFdPct">50%</div></div>
+      <div class="slider-wrap"><div class="slider-fill" id="pFdFill" style="width:50%;background:var(--fd)"></div><input type="range" id="pFdSlider" min="0" max="100" value="50" step="5" oninput="pSlider('fd')"></div>
+      <div class="alloc-amt" id="pFdAmt">$500,000</div>
+    </div>
+    <div class="alloc-item">
+      <div class="alloc-header"><div class="alloc-name"><div class="adot" style="background:var(--eq)"></div>Global Equities</div><div class="alloc-pct" id="pEqPct">50%</div></div>
+      <div class="slider-wrap"><div class="slider-fill" id="pEqFill" style="width:50%;background:var(--eq)"></div><input type="range" id="pEqSlider" min="0" max="100" value="50" step="5" oninput="pSlider('eq')"></div>
+      <div class="alloc-amt" id="pEqAmt">$500,000</div>
+    </div>
+    <div class="split-bar"><div class="split-fd" id="pSplitFd" style="width:50%">FD 50%</div><div class="split-eq" id="pSplitEq" style="width:50%">EQ 50%</div></div>
+    <button class="confirm-btn" id="pConfirmBtn" onclick="pSubmitAlloc()">CONFIRM ALLOCATION</button>
+    <div class="submitted-msg" id="pSubmittedMsg">✓ Allocation confirmed — waiting for facilitator</div>
+    <div class="locked-msg" id="pLockedMsg">⏸ Round locked — next year loading...</div>
+  </div>
+  <div class="history-section" id="pHistSection">
+    <div class="h-title">History</div>
+    <table class="h-table">
+      <thead><tr><th>Yr</th><th>FD%</th><th>EQ%</th><th>Split</th><th>Return</th><th>Value</th></tr></thead>
+      <tbody id="pHistBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     PLAYER — GAME OVER
+═══════════════════════════ -->
+<div id="playerGameOver" class="view">
+  <div class="go-trophy">🏆</div>
+  <div class="go-lbl">Final Rank</div>
+  <div class="go-rank" id="pGoRank">—</div>
+  <div><div class="go-lbl">Final Value</div><div class="go-value" id="pGoVal">—</div></div>
+  <div class="go-return" id="pGoRet"></div>
+  <div class="go-sharpe-box" id="pGoSharpe"></div>
+  <div class="go-msg" id="pGoMsg"></div>
+</div>
+
+<!-- COVID OVERLAYS -->
+<div id="covidCrisis" class="covid-overlay">
+  <div class="crisis-label">MARKETS IN FREEFALL</div>
+  <div class="crisis-flash">-20%</div>
+  <div class="crisis-headline">PANDEMIC DECLARED. COVID-19 spreading across every continent. Borders closing. Economies shutting down.</div>
+  <div class="crisis-sub">Your equity portfolio has just lost 20%. Do you want to rebalance?</div>
+  <div class="crisis-timer-lbl">Time to decide</div>
+  <div class="crisis-timer" id="pCrisisTimer">20</div>
+  <button class="btn-gold" id="pRebalBtn" onclick="pCrisisRebalance()" style="max-width:320px">REBALANCE NOW</button>
+  <button class="btn-red" id="pHoldBtn" onclick="pHoldPosition()">HOLD — STAY THE COURSE</button>
+  <div style="font-size:.72rem;color:var(--text-dim);max-width:280px;line-height:1.5" id="pCrisisAllocDisp"></div>
+</div>
+<div id="covidAbyss" class="covid-overlay">
+  <div class="abyss-lbl">MARKETS CONTINUE TO FALL</div>
+  <div class="abyss-pct">-34%</div>
+  <div class="abyss-hl">Circuit breakers triggered on global exchanges. Economists warn of a second Great Depression. There is no floor in sight.</div>
+  <div class="watch-only">👁 WATCH ONLY — NO ACTION AVAILABLE</div>
+  <div style="font-size:.75rem;color:var(--text-dim);max-width:280px;line-height:1.5;margin-top:.5rem">The facilitator will advance when ready.</div>
+</div>
+<div id="covidVaccine" class="covid-overlay">
+  <div class="vaccine-icon">💉</div>
+  <div class="vaccine-lbl">BREAKTHROUGH</div>
+  <div class="vaccine-pct">+15.9%</div>
+  <div class="vaccine-hl">Pfizer announces vaccine trial results exceeding all expectations. Markets explode higher in the fastest recovery ever recorded.</div>
+  <div class="vaccine-sub">Full year: +15.9% for global equities. Those who panicked sold low and missed the entire recovery.</div>
+</div>
+
+<!-- ═══════════════════════════
+     ADMIN — LOGIN
+═══════════════════════════ -->
+<div id="adminLogin" class="view">
+  <div class="admin-login-title">FACILITATOR<span>ACCESS</span></div>
+  <div class="card">
+    <div><label class="field-label">Password</label><input class="field-input" type="password" id="aPass" placeholder="Enter facilitator password"/></div>
+    <button class="btn-gold" onclick="adminLogin()">ENTER PANEL →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     ADMIN — PANEL
+═══════════════════════════ -->
+<div id="adminPanel" class="view">
+  <div class="admin-header">
+    <div><div class="ah-title">FACILITATOR PANEL</div><div class="ah-sub">Portfolio Challenge · Maybank Wealth Cambodia</div></div>
+    <div style="display:flex;gap:.75rem;align-items:center">
+      <button class="btn-ctrl btn-reset" style="flex:none;padding:.5rem 1rem;font-size:.82rem" onclick="showResetModal()">↺ RESET GAME</button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-lbl">Players</div><div class="stat-val" id="aSPl">0</div></div>
+    <div class="stat-card"><div class="stat-lbl">Current Year</div><div class="stat-val" id="aSYr">—</div></div>
+    <div class="stat-card"><div class="stat-lbl">Round</div><div class="stat-val" id="aSRnd">0/20</div></div>
+    <div class="stat-card"><div class="stat-lbl">Submitted</div><div class="stat-val" id="aSSub">0/0</div></div>
+  </div>
+  <div class="ctrl-panel">
+    <div class="panel-label">Game Control</div>
+    <div class="year-hero">
+      <div>
+        <div class="year-big">YEAR <span id="aYearBig">—</span></div>
+        <div class="year-real" id="aRealYr"></div>
+        <div class="year-event-nm" id="aEventNm">Waiting to start...</div>
+      </div>
+      <div class="returns-pair">
+        <div class="ret-card"><div class="ret-asset" style="color:var(--fd)">FD Return</div><div class="ret-val pos" id="aRFd">—</div></div>
+        <div class="ret-card"><div class="ret-asset" style="color:var(--eq)">Equity Return</div><div class="ret-val" id="aREq">—</div></div>
+      </div>
+    </div>
+    <div style="margin-top:.9rem">
+      <div style="font-size:.68rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase">Submissions</div>
+      <div class="sub-bar" id="aSubBar"></div>
+    </div>
+    <div class="ctrl-btns">
+      <button class="btn-ctrl btn-open" id="aBtnOpen" onclick="aOpenRound()">▶ OPEN ROUND</button>
+      <button class="btn-ctrl btn-lock" id="aBtnLock" onclick="aLockRound()" disabled>🔒 LOCK</button>
+      <button class="btn-ctrl btn-next" id="aBtnNext" onclick="aNextYear()" disabled>NEXT YEAR →</button>
+      <button class="btn-ctrl btn-end" id="aBtnEnd" onclick="aEndGame()">END GAME</button>
+    </div>
+    <div class="covid-zone" id="aCovidZone">
+      <div class="covid-title">⚠️ COVID YEAR CONTROLS — Year 15</div>
+      <div style="font-size:.78rem;color:var(--text-dim);margin-bottom:.75rem;line-height:1.5">Trigger each phase in sequence. Pause between phases for reactions.</div>
+      <div class="ctrl-btns">
+        <button class="btn-ctrl btn-crisis" id="aBtnCrisis" onclick="aTriggerCrisis()" disabled>💥 -20% CRASH</button>
+        <button class="btn-ctrl btn-abyss" id="aBtnAbyss" onclick="aTriggerAbyss()" disabled>📉 -34% ABYSS</button>
+        <button class="btn-ctrl btn-vaccine" id="aBtnVaccine" onclick="aTriggerVaccine()" disabled>💉 VACCINE</button>
+      </div>
+    </div>
+    <div class="headline-preview" id="aHlPreview" style="display:none">
+      <div class="hp-lbl">Before headline (players see)</div>
+      <div class="hp-before" id="aHpBefore"></div>
+      <div class="hp-lbl" style="margin-top:.5rem">After reveal</div>
+      <div class="hp-after" id="aHpAfter"></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="panel-label">Timeline (real years — facilitator only)</div>
+    <div class="timeline" id="aTimeline"></div>
+  </div>
+  <div class="lb-wrap">
+    <div class="lb-hdr">
+      <div class="panel-label" style="margin:0">Live Leaderboard</div>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <span style="font-size:.72rem;color:var(--blue);font-family:'DM Mono',monospace">Sharpe = risk-adjusted return</span>
+        <button class="btn-gold" style="width:auto;padding:.4rem .9rem;font-size:.82rem" onclick="aRefresh()">↻ REFRESH</button>
+      </div>
+    </div>
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>Player</th><th>Portfolio</th><th>Total Return</th><th>Sharpe</th><th>Allocation</th></tr></thead>
+      <tbody id="aLbBody"></tbody>
+    </table>
+  </div>
+  <div class="pcards-wrap">
+    <div class="lb-hdr"><div class="panel-label" style="margin:0">Player Details</div><div style="font-size:.78rem;color:var(--text-dim)" id="aPCardCnt">0 players</div></div>
+    <div class="pcard-grid" id="aPCardGrid"></div>
+  </div>
+</div>
+
+<!-- Reset Confirm Modal -->
+<div class="modal-bg" id="resetModal">
+  <div class="modal-box">
+    <div class="modal-title">RESET GAME?</div>
+    <div class="modal-sub">This will delete all players and return the game to the start. Use this before each new training session. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="hideResetModal()">CANCEL</button>
+      <button class="modal-confirm" onclick="aResetGame()">RESET</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     TV LEADERBOARD
+═══════════════════════════ -->
+<div id="tvView" class="view">
+  <div class="tv-header">
+    <div><div class="tv-title">PORTFOLIO <span>CHALLENGE</span></div><div class="tv-sub">Maybank Wealth Cambodia · Real Markets · 20 Years</div></div>
+    <div><div class="tv-year" id="tvYear">—</div><div class="tv-event" id="tvEvent">Connecting...</div></div>
+    <div><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1rem,2vw,1.5rem);letter-spacing:.1em;color:var(--text-dim);text-align:right">LIVE</div><div class="tv-join">Open on your phone to join</div></div>
+  </div>
+  <div class="ret-banner" id="tvRetBanner">
+    <div class="rb-year" id="tvRbYear">—</div>
+    <div class="rb-item"><div class="rb-lbl" style="color:var(--fd)">FD</div><div class="rb-val pos" id="tvRbFd">—</div></div>
+    <div class="rb-item"><div class="rb-lbl" style="color:var(--eq)">Equities</div><div class="rb-val" id="tvRbEq">—</div></div>
+    <div class="rb-hl" id="tvRbHl"></div>
+  </div>
+  <div class="crisis-banner" id="tvCrisisBanner">
+    <div class="cb-flash" id="tvCbFlash">—</div>
+    <div class="cb-text"><div class="cb-title" id="tvCbTitle">MARKETS IN FREEFALL</div><div class="cb-sub" id="tvCbSub"></div></div>
+    <div class="cb-timer" id="tvCbTimer"></div>
+  </div>
+  <div class="round-timer-label" id="tvTimerLabel" style="display:none"></div>
+  <div class="round-timer-bar" id="tvTimerBar" style="display:none"><div class="round-timer-fill" id="tvTimerFill"></div></div>
+  <div class="lb-main" id="tvLbMain"></div>
+  <div class="tv-footer">
+    <div class="ft-stat">Starting Capital: <span>$1,000,000</span></div>
+    <div class="ft-stat" id="tvFtRound">Round: <span>—</span></div>
+    <div class="ft-stat"><span style="color:var(--blue)">Sharpe</span> = return per unit of risk</div>
+    <div class="ft-stat" id="tvFtPlayers">Players: <span>—</span></div>
+    <div class="ft-stat">USD FD vs MSCI World Equities</div>
+  </div>
+  <div id="tvGameOver">
+    <div style="font-size:4rem">🏆</div>
+    <div class="go-big">GAME OVER</div>
+    <div class="go-cols">
+      <div class="go-col">
+        <div class="go-col-lbl">Highest Portfolio</div>
+        <div class="go-winner" id="tvGoRetW">—</div>
+        <div class="go-val" id="tvGoRetV">—</div>
+        <div style="font-size:clamp(.6rem,1.1vw,.8rem);color:var(--text-dim);margin-top:.3rem" id="tvGoRetP"></div>
+      </div>
+      <div class="go-divider"></div>
+      <div class="go-col">
+        <div class="go-col-lbl" style="color:var(--blue)">Best Risk-Adjusted (Sharpe)</div>
+        <div class="go-sharpe-w" id="tvGoSharpeW">—</div>
+        <div style="font-family:'DM Mono',monospace;font-size:clamp(.8rem,1.6vw,1.2rem);color:var(--blue);margin-top:.2rem" id="tvGoSharpeV">—</div>
+        <div style="font-size:clamp(.6rem,1.1vw,.8rem);color:var(--text-dim);margin-top:.3rem">Highest return per unit of risk</div>
+      </div>
+    </div>
+    <div class="go-msg-tv" id="tvGoMsg"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════
+// CONFIG — NO ROOM CODES
+// One permanent session ID used everywhere
+// ═══════════════════════════
+const SUPABASE_URL='https://vajbycsscbemorbzxruf.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhamJ5Y3NzY2JlbW9yYnp4cnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzkxNTcsImV4cCI6MjA5MjMxNTE1N30.b-Sos_9WkIeaXcwviO-N6QXCUd3L432RuZKlpxk2blY';
+const ADMIN_PASSWORD='maybank2025';   // ← change this to whatever you want
+const SESSION_ID='maybank-cambodia'; // ← fixed session key, never changes
+
+const {createClient}=supabase;
+const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+// ═══════════════════════════
+// HISTORICAL DATA
+// ═══════════════════════════
+const DATA={
+  2006:{fd:5.5,eq:20.95,event:"Global Boom",
+    before:"Global imbalances persist as the US current account deficit hits record levels. Housing affordability deteriorating in major markets. Some economists warn growth may be peaking. FD rates remain attractive at current levels.",
+    after:"A vintage year that caught the cautious off guard. Global equities surge +20.1%. Those who played it safe with FD earned 6% — equity investors earned more than triple that. The market rewarded the bold."},
+  2007:{fd:5.5,eq:11.66,event:"Calm Before",
+    before:"Global growth remains solid. Corporate earnings broadly in line with expectations. Labour markets tight across developed economies. Inflation contained. A relatively uneventful macro backdrop.",
+    after:"Another positive year. Equities return +9.0%, FD at 6%. Both strategies work — but equity investors are steadily pulling ahead. A calm year on the surface."},
+  2008:{fd:5.5,eq:-42.2,event:"Great Financial Crisis",
+    before:"Global credit conditions tighten slightly. Central banks monitoring inflation carefully. Most major economies continue to report growth. Commodity prices remain elevated.",
+    after:"CATASTROPHE. A major US investment bank collapses, triggering a global financial crisis. Equities lose -40.3%. FD holders at 6% are the only winners. Black swans are never predicted."},
+  2009:{fd:5.0,eq:34.63,event:"The Rebound",
+    before:"Global recession officially confirmed. Unemployment surging. Consumer confidence at historic lows. Analysts warn of prolonged downturn. Capital preservation is the dominant theme on Wall Street.",
+    after:"The greatest trap of the game. Equities stage a stunning +30.0% recovery. Those who fled to FD locked in their losses and missed the entire rebound. FD: +5.5%."},
+  2010:{fd:4.8,eq:12.66,event:"Wall of Worry",
+    before:"Greece on the verge of sovereign default. Eurozone debt crisis spreading. IMF in emergency talks. Questions raised about the survival of the Euro. Risk appetite subdued.",
+    after:"Despite the noise, equities grind higher — +11.8%. FD dips to 5.5%. Markets have a habit of climbing walls of worry. The patient investor is rewarded again."},
+  2011:{fd:4.5,eq:-7.34,event:"Eurozone Crisis",
+    before:"European debt crisis deepens. Italy and Spain in the crosshairs. US credit rating downgraded for the first time in history. Global growth forecasts being cut. Volatility spiking.",
+    after:"A genuinely difficult year. Equities fall -5.5%. FD holders at 5.5% feel vindicated — but this is only the second down year in six."},
+  2012:{fd:4.3,eq:16.13,event:"Whatever It Takes",
+    before:"Eurozone on the brink. Spanish borrowing costs hit crisis levels. Greek exit from the Euro openly debated. IMF warns of global contagion. Many economists predict recession across Europe.",
+    after:"One decisive speech changes everything. Equities rally +15.8%. FD: 5.5%. The market turns before the news does. Waiting for certainty means missing the move."},
+  2013:{fd:4.07,eq:22.8,event:"Bull Market Roars",
+    before:"Federal Reserve signals it may begin withdrawing stimulus — triggering a sharp selloff dubbed the 'Taper Tantrum.' Bond yields spike. Capital fleeing riskier assets globally.",
+    after:"The panic was short-lived. Equities deliver a stunning +26.7%. FD slips to 5%. Those spooked by taper headlines missed one of the best years of the decade."},
+  2014:{fd:4.04,eq:4.16,event:"Slow Grind",
+    before:"Oil prices in freefall — down over 40% from peak. Russia escalating tensions in Eastern Europe. Deflation concerns emerging in Europe. Strong US dollar squeezing emerging markets.",
+    after:"A modest but positive year. Equities return +4.9%, barely ahead of FD at 5%. Not every year is dramatic — but the steady compounder stays in the game."},
+  2015:{fd:4.22,eq:-2.36,event:"China Bubble Bursts",
+    before:"Chinese equities in full-blown retail mania — up over 100% in 12 months. Global growth narrative intact. US Fed preparing for its first rate hike in a decade. Optimism broadly elevated.",
+    after:"China's bubble bursts spectacularly. Global equities finish -0.9%. FD at 5% wins the year. Euphoria is often a warning sign, not a green light."},
+  2016:{fd:4.33,eq:7.87,event:"Shock & Rally",
+    before:"Brexit referendum too close to call. Trump candidacy upending US political establishment. Populist movements surging across Europe. IMF cuts global growth forecasts. Uncertainty at decade highs.",
+    after:"Brexit passes. Trump wins. Both times markets crash then violently recover. Equities end +7.5%. Two of the biggest political shocks in modern history — and the market shrugs by December."},
+  2017:{fd:4.42,eq:23.97,event:"Goldilocks Year",
+    before:"Global economic data synchronised for the first time in years. Corporate earnings strong across US, Europe and Asia. Inflation subdued. Political noise fading. A rare moment of calm.",
+    after:"A near-perfect year. Equities deliver +22.4%. FD slips to 4.5%. The compounding gap between FD-only and equity portfolios is now very hard to close."},
+  2018:{fd:4.41,eq:-9.42,event:"Trade War I",
+    before:"US-China trade war escalating rapidly. Fed raising interest rates aggressively. Technology stocks under regulatory scrutiny. Credit spreads widening. Late cycle dynamics increasingly evident.",
+    after:"Trade war bites hard. Equities fall -8.7%. FD at 4%. Fourth negative year in 13 — but equity investors remain dramatically ahead on cumulative terms."},
+  2019:{fd:4.39,eq:26.6,event:"Monster Recovery",
+    before:"Yield curve inverts — a recession signal that has predicted every US downturn for 50 years. Global manufacturing in contraction. Trade war unresolved. IMF cuts global growth forecasts.",
+    after:"The recession never arrived. The Fed pivots and equities explode +27.7%. FD: 4%. The yield curve lied. Those who heeded the warning missed one of the best years of the game."},
+  2020:{fd:4.35,eq:16.26,event:"COVID-19 Pandemic",
+    before:"Reports emerging of a novel respiratory virus spreading rapidly in parts of Asia. WHO convening emergency meetings. Several governments restricting travel. Markets so far unmoved — but health authorities are quietly alarmed.",
+    after:"COVID-19 becomes the worst global pandemic in a century. Fastest crash and fastest recovery in history. Net result: +15.9%. The decisions made mid-year defined everything."},
+  2021:{fd:4.36,eq:18.54,event:"Vaccine Rally",
+    before:"Inflation surging to multi-year highs as supply chains collapse globally. Central banks insisting it is 'transitory' but markets unconvinced. Asset valuations at historically elevated levels. Some warn of an imminent correction.",
+    after:"Inflation was real, but equities didn't care — surging +21.8%. FD falls to 3.0%. FD investors are now earning less than inflation. Their 'safe' returns are quietly losing purchasing power."},
+  2022:{fd:4.8,eq:-18.36,event:"Inflation Shock",
+    before:"Inflation at 40-year highs. Federal Reserve embarking on most aggressive rate hiking cycle in decades. Russia invades Ukraine. Energy prices at crisis levels. Recession risk elevated globally.",
+    after:"The most brutal year since 2008. Equities fall -18.1%. FD at 3% is cold comfort as inflation runs at 7-8%. Down years are the price of admission — equities always recover."},
+  2023:{fd:5.89,eq:22.2,event:"AI Revolution",
+    before:"Silicon Valley Bank collapses — largest US bank failure since 2008. Contagion fears spreading. Fed still hiking rates. Consensus forecast: recession by year end. Sentiment deeply negative.",
+    after:"Every economist got it wrong. AI euphoria ignites a +23.8% rally. FD: 3.5%. The market does not read forecasts. It moves before you're ready."},
+  2024:{fd:6.21,eq:17.49,event:"Soft Landing",
+    before:"Federal Reserve signals rate cuts ahead as inflation cools. AI boom accelerating. Soft landing gaining credibility. Valuations elevated but earnings growth supportive.",
+    after:"Rate cuts arrive. Equities respond with +18.7%. Over 19 years: pure FD ~$2.4M, pure equities north of $8M. One year to go."},
+  2025:{fd:5.26,eq:22.34,event:"Trade War & Rebound",
+    before:"New US administration announces sweeping global tariff regime. Trading partners retaliating. Supply chain disruption fears resurface. Markets at elevated valuations entering the year. Analysts deeply divided on outlook.",
+    after:"Despite early tariff shocks rattling markets, global equities finished the year strongly at +21.09%. FD: 3.0%. A stark reminder — the headlines at the start of a year rarely predict how it ends. 20 years complete."}
+};
+const YEARS=Object.keys(DATA).map(Number).sort();
+
+// ═══════════════════════════
+// SHARED HELPERS
+// ═══════════════════════════
+function fmt(n){return '$'+Math.round(n).toLocaleString('en-US');}
+function fmtP(n){return (n>=0?'+':'')+n.toFixed(1)+'%';}
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(err?' err':'')+' show';
+  setTimeout(()=>t.className='toast',2600);
+}
+function calcSharpe(history){
+  if(!history||history.length<2) return null;
+  const rets=history.map(h=>+h.portfolioReturn);
+  const avg=rets.reduce((a,b)=>a+b,0)/rets.length;
+  const variance=rets.reduce((a,b)=>a+Math.pow(b-avg,2),0)/rets.length;
+  const std=Math.sqrt(variance);
+  return std>0?((avg-4)/std).toFixed(2):null;
+}
+// Average allocation across all years — used for display everywhere
+function avgAlloc(history){
+  if(!history||history.length===0) return {fd:50,eq:50};
+  const avgFd=Math.round(history.reduce((s,h)=>s+(+h.fdAlloc),0)/history.length);
+  return {fd:avgFd,eq:100-avgFd};
+}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function hideCovidOverlays(){
+  ['covidCrisis','covidAbyss','covidVaccine'].forEach(id=>document.getElementById(id).classList.remove('show'));
+}
+
+// ═══════════════════════════
+// LANDING
+// ═══════════════════════════
+function selectRole(role){
+  if(role==='player') showView('playerJoin');
+  if(role==='admin')  showView('adminLogin');
+  if(role==='tv')     {showView('tvView');tvInit();}
+}
+
+// ═══════════════════════════
+// ENSURE SESSION EXISTS
+// Called once on first use — creates the single
+// permanent session row if it doesn't exist yet
+// ═══════════════════════════
+async function ensureSession(){
+  const {data}=await db.from('game_sessions').select('*').eq('room_code',SESSION_ID).single();
+  if(!data){
+    await db.from('game_sessions').insert({
+      room_code:SESSION_ID,status:'waiting',
+      current_year:null,current_year_index:-1,
+      admin_password:ADMIN_PASSWORD,
+      round_started_at:null
+    });
+  }
+  return data || (await db.from('game_sessions').select('*').eq('room_code',SESSION_ID).single()).data;
+}
+
+// ═══════════════════════════
+// PLAYER
+// ═══════════════════════════
+let pPlayerId=null,pPortfolio=1000000,pFdAlloc=50,pEqAlloc=50;
+let pHistory=[],pCrisisTimer=null,pCrisisDecided=false,pCurrentYear=null,pCurrentRound=0;
+
+function pSlider(changed){
+  const fs=document.getElementById('pFdSlider'),es=document.getElementById('pEqSlider');
+  if(changed==='fd'){pFdAlloc=+fs.value;pEqAlloc=100-pFdAlloc;es.value=pEqAlloc;}
+  else{pEqAlloc=+es.value;pFdAlloc=100-pEqAlloc;fs.value=pFdAlloc;}
+  document.getElementById('pFdPct').textContent=pFdAlloc+'%';
+  document.getElementById('pEqPct').textContent=pEqAlloc+'%';
+  document.getElementById('pFdFill').style.width=pFdAlloc+'%';
+  document.getElementById('pEqFill').style.width=pEqAlloc+'%';
+  document.getElementById('pFdAmt').textContent=fmt(pPortfolio*pFdAlloc/100);
+  document.getElementById('pEqAmt').textContent=fmt(pPortfolio*pEqAlloc/100);
+  const sf=document.getElementById('pSplitFd'),se=document.getElementById('pSplitEq');
+  sf.style.width=pFdAlloc+'%';sf.textContent=pFdAlloc>14?'FD '+pFdAlloc+'%':'';
+  se.style.width=pEqAlloc+'%';se.textContent=pEqAlloc>14?'EQ '+pEqAlloc+'%':'';
+}
+
+async function playerJoin(){
+  const name=document.getElementById('pName').value.trim();
+  if(!name){showToast('Enter your name',true);return;}
+  const sess=await ensureSession();
+  if(!sess){showToast('No active session found',true);return;}
+  // Upsert player
+  const {data:ex}=await db.from('players').select('*').eq('room_code',SESSION_ID).eq('name',name).single();
+  if(ex){
+    pPlayerId=ex.id;pPortfolio=ex.portfolio_value;
+    pHistory=ex.history||[];pFdAlloc=ex.fd_alloc||50;pEqAlloc=ex.eq_alloc||50;
+  } else {
+    const {data:np}=await db.from('players').insert({
+      room_code:SESSION_ID,name,portfolio_value:1000000,fd_alloc:50,eq_alloc:50,
+      history:[],allocation_submitted:false,
+      crisis_fd_alloc:null,crisis_eq_alloc:null,crisis_decision:null
+    }).select().single();
+    pPlayerId=np.id;
+  }
+  document.getElementById('pNameDisp').textContent=name;
+  pSubscribe();
+  showView('playerWaiting');
+  pLoadChips();
+  if(sess.status!=='waiting') pHandleSession(sess);
+}
+
+async function pLoadChips(){
+  const {data}=await db.from('players').select('name').eq('room_code',SESSION_ID);
+  const c=document.getElementById('pChips');c.innerHTML='';
+  (data||[]).forEach(p=>{const d=document.createElement('div');d.className='chip';d.textContent=p.name;c.appendChild(d);});
+}
+
+function pSubscribe(){
+  db.channel('p_sess_'+SESSION_ID)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'game_sessions',filter:`room_code=eq.${SESSION_ID}`},p=>pHandleSession(p.new))
+    .subscribe();
+  db.channel('p_players_'+SESSION_ID)
+    .on('postgres_changes',{event:'*',schema:'public',table:'players',filter:`room_code=eq.${SESSION_ID}`},()=>pLoadChips())
+    .subscribe();
+}
+
+async function pHandleSession(sess){
+  hideCovidOverlays();
+  const s=sess.status;
+  if(s==='waiting'){showView('playerWaiting');return;}
+  if(s==='round_open'){
+    pCurrentYear=sess.current_year;pCurrentRound=sess.current_year_index+1;
+    const yi=YEARS.indexOf(pCurrentYear);
+    if(yi>0) await pApplyReturns(YEARS[yi-1]);
+    pShowGameRound();
+  }
+  if(s==='round_locked') pLockAlloc();
+  if(s==='covid_crisis'){showView('playerGame');pStartCrisis();playSound('crash');}
+  if(s==='covid_abyss'){await pApplyCovidLeg('abyss');document.getElementById('covidAbyss').classList.add('show');pRefreshPortfolio();playSound('abyss');}
+  if(s==='covid_vaccine'){await pApplyCovidLeg('vaccine');document.getElementById('covidVaccine').classList.add('show');pRefreshPortfolio();playSound('vaccine');}
+  if(s==='game_over'){await pApplyReturns(YEARS[YEARS.length-1]);pShowGameOver();}
+}
+
+// Retry wrapper for DB writes
+async function dbWrite(update,match,retries=3){
+  for(let i=0;i<retries;i++){
+    const {error}=await db.from('players').update(update).match(match);
+    if(!error) return true;
+    await new Promise(r=>setTimeout(r,200*Math.pow(2,i)));
+  }
+  return false;
+}
+// Random jitter to stagger 20 simultaneous player writes
+function jitter(ms=800){return new Promise(r=>setTimeout(r,Math.random()*ms));}
+
+async function pApplyReturns(year){
+  // Always fresh read — prevents stale local state causing wrong calcs
+  const {data:pl}=await db.from('players').select('*').eq('id',pPlayerId).single();
+  if(!pl) return;
+  // Idempotency — never apply same year twice
+  if((pl.history||[]).some(h=>h.year===year)) return;
+  const d=DATA[year],prev=pl.portfolio_value;
+  const fdP=prev*(pl.fd_alloc/100),eqP=prev*(pl.eq_alloc/100);
+  const newV=fdP*(1+d.fd/100)+eqP*(1+d.eq/100);
+  const ret=((newV-prev)/prev)*100;
+  const newH=[...(pl.history||[]),{year,round:YEARS.indexOf(year)+1,fdAlloc:pl.fd_alloc,eqAlloc:pl.eq_alloc,fdReturn:d.fd,eqReturn:d.eq,portfolioReturn:ret,endValue:newV}];
+  pPortfolio=newV; pHistory=newH;
+  // Stagger: 20 players won't all hit DB at same millisecond
+  await jitter(600);
+  await dbWrite({portfolio_value:newV,history:newH},{id:pPlayerId});
+}
+
+async function pApplyCovidLeg(leg){
+  const {data:pl}=await db.from('players').select('*').eq('id',pPlayerId).single();
+  if(!pl||pl['covid_leg_'+leg+'_done']) return;
+  let newV=pl.portfolio_value;
+  const fdA=pl.crisis_fd_alloc!==null?pl.crisis_fd_alloc:pl.fd_alloc;
+  const eqA=pl.crisis_eq_alloc!==null?pl.crisis_eq_alloc:pl.eq_alloc;
+  if(leg==='abyss'){
+    newV=newV*(fdA/100)+newV*(eqA/100)*0.825;
+  }
+  if(leg==='vaccine'){
+    const eqP=newV*(eqA/100),fdP=newV*(fdA/100);
+    newV=fdP*(1+DATA[2020].fd/100)+eqP*(1.159/0.66);
+  }
+  pPortfolio=newV;
+  const h=[...(pl.history||[])];
+  const entry={year:2020,round:15,fdAlloc:pl.fd_alloc,eqAlloc:pl.eq_alloc,fdReturn:DATA[2020].fd,eqReturn:DATA[2020].eq,portfolioReturn:((newV-1000000)/1000000*100).toFixed(1),endValue:newV,covid:true};
+  const idx=h.findIndex(x=>x.year===2020);
+  if(idx>=0) h[idx]=entry; else h.push(entry);
+  pHistory=h;
+  await db.from('players').update({portfolio_value:newV,history:h,['covid_leg_'+leg+'_done']:true}).eq('id',pPlayerId);
+}
+
+async function pShowGameRound(){
+  showView('playerGame');
+  document.getElementById('pRoundDisp').textContent=pCurrentRound;
+  const {data:pl}=await db.from('players').select('*').eq('id',pPlayerId).single();
+  if(pl){pPortfolio=pl.portfolio_value;pFdAlloc=pl.fd_alloc;pEqAlloc=pl.eq_alloc;pHistory=pl.history||[];}
+  pRefreshPortfolio();
+  document.getElementById('pFdSlider').value=pFdAlloc;document.getElementById('pEqSlider').value=pEqAlloc;pSlider('fd');
+  document.getElementById('pConfirmBtn').disabled=false;document.getElementById('pConfirmBtn').style.display='block';
+  document.getElementById('pSubmittedMsg').style.display='none';document.getElementById('pLockedMsg').style.display='none';
+  document.getElementById('pAllocTitle').textContent='Set your allocation for this year';
+  const d=DATA[pCurrentYear];
+
+  // ── CURRENT YEAR BRIEFING (always shown) ──
+  document.getElementById('pBriefingTag').textContent='THIS YEAR — MARKET BRIEFING';
+  document.getElementById('pBriefingHl').textContent=d.before;
+
+  // ── PRIOR YEAR RESULT (shown from Year 2 onwards) ──
+  const yi=YEARS.indexOf(pCurrentYear);
+  if(yi>0){
+    const py=YEARS[yi-1],pd=DATA[py];
+    const isUp=pd.eq>=0;
+    const resultCard=document.getElementById('pResultCard');
+    resultCard.style.display='block';
+    resultCard.className='event-card result-card'+(isUp?'':' neg-result');
+    const rtag=document.getElementById('pResultTag');
+    rtag.textContent='YEAR '+(pCurrentRound-1)+' RESULT';
+    rtag.className='ev-tag result-tag'+(isUp?'':' neg');
+    // FD pill
+    const lfd=document.getElementById('pLastFd');
+    lfd.textContent=fmtP(pd.fd); lfd.className='pos';
+    // EQ pill
+    const leq=document.getElementById('pLastEq');
+    leq.textContent=fmtP(pd.eq); leq.className=isUp?'pos':'neg';
+    // After headline
+    document.getElementById('pResultHl').textContent=pd.after;
+    // Sound
+    setTimeout(()=>playYearSound(pd.eq),300);
+  } else {
+    document.getElementById('pResultCard').style.display='none';
+  }
+  if(pHistory.length>0){pRenderHistory();document.getElementById('pHistSection').style.display='block';}
+  pUpdateRank();
+}
+
+function pRefreshPortfolio(){
+  document.getElementById('pVal').textContent=fmt(pPortfolio);
+  const tot=((pPortfolio-1000000)/1000000)*100;
+  const pc=document.getElementById('pChg');
+  if(pHistory.length>0){pc.textContent=fmtP(tot)+' since start';pc.className='p-change '+(tot>=0?'pos':'neg');}
+  document.getElementById('pFdV').textContent=fmt(pPortfolio*pFdAlloc/100);
+  document.getElementById('pEqV').textContent=fmt(pPortfolio*pEqAlloc/100);
+}
+
+function pLockAlloc(){
+  document.getElementById('pConfirmBtn').style.display='none';
+  document.getElementById('pSubmittedMsg').style.display='none';
+  document.getElementById('pLockedMsg').style.display='block';
+}
+
+async function pSubmitAlloc(){
+  await db.from('players').update({fd_alloc:pFdAlloc,eq_alloc:pEqAlloc,allocation_submitted:true}).eq('id',pPlayerId);
+  document.getElementById('pConfirmBtn').style.display='none';
+  document.getElementById('pSubmittedMsg').style.display='block';
+  showToast('Allocation confirmed!');
+}
+
+function pStartCrisis(){
+  pCrisisDecided=false;let t=20;
+  document.getElementById('pCrisisTimer').textContent=t;
+  document.getElementById('pCrisisAllocDisp').textContent=`Current: FD ${pFdAlloc}% / EQ ${pEqAlloc}% — Adjust sliders then tap Rebalance, or Hold`;
+  document.getElementById('covidCrisis').classList.add('show');
+  document.getElementById('pRebalBtn').disabled=false;document.getElementById('pHoldBtn').disabled=false;
+  pCrisisTimer=setInterval(async()=>{
+    t--;document.getElementById('pCrisisTimer').textContent=t;
+    if(t<=0){clearInterval(pCrisisTimer);if(!pCrisisDecided) await pHoldPosition();}
+  },1000);
+}
+
+async function pCrisisRebalance(){
+  if(pCrisisDecided) return;
+  pCrisisDecided=true;clearInterval(pCrisisTimer);
+  document.getElementById('pRebalBtn').disabled=true;document.getElementById('pHoldBtn').disabled=true;
+  const {data:pl}=await db.from('players').select('*').eq('id',pPlayerId).single();
+  const afterCrash=pl.portfolio_value*(pl.fd_alloc/100)+pl.portfolio_value*(pl.eq_alloc/100)*0.80;
+  await db.from('players').update({portfolio_value:afterCrash,crisis_fd_alloc:pFdAlloc,crisis_eq_alloc:pEqAlloc,crisis_decision:'rebalanced',allocation_submitted:true}).eq('id',pPlayerId);
+  pPortfolio=afterCrash;showToast('Rebalance saved!');
+  document.getElementById('covidCrisis').classList.remove('show');
+}
+
+async function pHoldPosition(){
+  if(pCrisisDecided) return;
+  pCrisisDecided=true;clearInterval(pCrisisTimer);
+  document.getElementById('pRebalBtn').disabled=true;document.getElementById('pHoldBtn').disabled=true;
+  const {data:pl}=await db.from('players').select('*').eq('id',pPlayerId).single();
+  const afterCrash=pl.portfolio_value*(pl.fd_alloc/100)+pl.portfolio_value*(pl.eq_alloc/100)*0.80;
+  await db.from('players').update({portfolio_value:afterCrash,crisis_fd_alloc:pl.fd_alloc,crisis_eq_alloc:pl.eq_alloc,crisis_decision:'held',allocation_submitted:true}).eq('id',pPlayerId);
+  pPortfolio=afterCrash;showToast('Holding position...');
+  document.getElementById('covidCrisis').classList.remove('show');
+}
+
+function pRenderHistory(){
+  const tb=document.getElementById('pHistBody');tb.innerHTML='';
+  [...pHistory].reverse().forEach(h=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${h.round||'?'}</td><td style="color:var(--fd)">${(+h.fdReturn).toFixed(1)}%</td><td class="${+h.eqReturn>=0?'pos':'neg'}">${fmtP(+h.eqReturn)}</td><td style="color:var(--text-dim)">${h.fdAlloc}/${h.eqAlloc}</td><td class="${+h.portfolioReturn>=0?'pos':'neg'}">${fmtP(+h.portfolioReturn)}</td><td>${fmt(h.endValue)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+async function pUpdateRank(){
+  const {data}=await db.from('players').select('portfolio_value').eq('room_code',SESSION_ID).order('portfolio_value',{ascending:false});
+  if(!data) return;
+  const r=data.findIndex(p=>Math.abs(p.portfolio_value-pPortfolio)<1)+1;
+  document.getElementById('pRankDisp').textContent=`#${r} of ${data.length}`;
+}
+
+async function pShowGameOver(){
+  const {data}=await db.from('players').select('*').eq('room_code',SESSION_ID).order('portfolio_value',{ascending:false});
+  const rank=(data||[]).findIndex(p=>p.id===pPlayerId)+1;
+  const tot=((pPortfolio-1000000)/1000000)*100;
+  const sharpe=calcSharpe(pHistory);
+  document.getElementById('pGoRank').textContent='#'+rank;
+  document.getElementById('pGoVal').textContent=fmt(pPortfolio);
+  document.getElementById('pGoRet').textContent=fmtP(tot)+' total return over 20 years';
+  document.getElementById('pGoRet').className='go-return '+(tot>=0?'pos':'neg');
+  if(sharpe) document.getElementById('pGoSharpe').innerHTML=`<div style="font-size:.7rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:.3rem">Your Sharpe Ratio</div><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--gold)">${sharpe}</div><div style="font-size:.75rem;color:var(--text-dim);margin-top:.2rem">Return per unit of risk taken</div>`;
+  const avgEq=pHistory.reduce((s,h)=>s+(+h.eqAlloc),0)/Math.max(pHistory.length,1);
+  document.getElementById('pGoMsg').textContent=avgEq<20?'You favoured Fixed Deposits throughout. Safe — but look at what equity exposure could have added over 20 years of compounding.':avgEq>75?'You embraced equities through the volatility. The long-term compounding has done its work.':'A balanced approach. Diversification smoothed the ride while still capturing meaningful equity upside.';
+  showView('playerGameOver');
+}
+
+// ═══════════════════════════
+// ADMIN
+// ═══════════════════════════
+let aYearIdx=-1,aStatus='waiting',aRefInt=null;
+let aRoundTimer=null,aRoundTimerSecs=0;
+const ROUND_DURATION=60; // seconds per round
+
+function aStartRoundTimer(){
+  aStopRoundTimer();
+  aRoundTimerSecs=ROUND_DURATION;
+  // Update admin button label
+  document.getElementById('aBtnLock').textContent='🔒 LOCK ('+aRoundTimerSecs+'s)';
+  aRoundTimer=setInterval(async()=>{
+    aRoundTimerSecs--;
+    const yr=YEARS[aYearIdx];
+    if(yr===2020) return; // COVID year uses its own flow
+    const lbl=document.getElementById('aBtnLock');
+    if(lbl) lbl.textContent='🔒 LOCK ('+aRoundTimerSecs+'s)';
+    if(aRoundTimerSecs<=0){
+      aStopRoundTimer();
+      await aLockRound(); // auto-lock — single write, no player-side race
+    }
+  },1000);
+}
+
+function aStopRoundTimer(){
+  if(aRoundTimer){clearInterval(aRoundTimer);aRoundTimer=null;}
+  const lbl=document.getElementById('aBtnLock');
+  if(lbl) lbl.textContent='🔒 LOCK';
+}
+
+async function adminLogin(){
+  const pass=document.getElementById('aPass').value.trim();
+  if(pass!==ADMIN_PASSWORD){showToast('Wrong password',true);return;}
+  const sess=await ensureSession();
+  aYearIdx=sess?.current_year_index??-1;
+  aStatus=sess?.status||'waiting';
+  aEnterPanel();
+}
+
+function aEnterPanel(){
+  showView('adminPanel');
+  aBuildTimeline();aSubscribeAdmin();aRefresh();aUpdateYearDisplay();aUpdateControls();
+  aRefInt=setInterval(aRefresh,5000);
+}
+
+function aBuildTimeline(){
+  const tl=document.getElementById('aTimeline');tl.innerHTML='';
+  YEARS.forEach(yr=>{
+    const d=DATA[yr];
+    const wrap=document.createElement('div');wrap.className='tl-yr';wrap.id='atl'+yr;
+    const dot=document.createElement('div');dot.className='tl-dot upcoming';
+    dot.textContent=String(yr).slice(2);dot.title=yr+': '+d.event;
+    dot.onclick=()=>aPreviewYear(yr);
+    const lbl=document.createElement('div');lbl.className='tl-lbl';
+    lbl.textContent=d.eq>0?'▲':'▼';lbl.style.color=d.eq>0?'#00d084':'#ff4757';
+    wrap.appendChild(dot);wrap.appendChild(lbl);tl.appendChild(wrap);
+  });
+}
+
+function aUpdateTimeline(){
+  YEARS.forEach((yr,i)=>{
+    const dot=document.querySelector('#atl'+yr+' .tl-dot');if(!dot) return;
+    dot.className='tl-dot';
+    if(i<aYearIdx) dot.classList.add('done');
+    else if(i===aYearIdx) dot.classList.add('current');
+    else dot.classList.add('upcoming');
+  });
+}
+
+function aPreviewYear(yr){
+  const d=DATA[yr];
+  document.getElementById('aHlPreview').style.display='block';
+  document.getElementById('aHpBefore').textContent=d.before;
+  document.getElementById('aHpAfter').textContent=d.after;
+}
+
+function aUpdateYearDisplay(){
+  if(aYearIdx<0){
+    document.getElementById('aYearBig').textContent='—';
+    document.getElementById('aRealYr').textContent='';
+    document.getElementById('aEventNm').textContent='Waiting to start...';
+    document.getElementById('aRFd').textContent='—';document.getElementById('aREq').textContent='—';
+    document.getElementById('aSYr').textContent='—';document.getElementById('aSRnd').textContent='0/20';return;
+  }
+  const yr=YEARS[aYearIdx],d=DATA[yr],round=aYearIdx+1;
+  document.getElementById('aYearBig').textContent=round;
+  document.getElementById('aRealYr').textContent='Real year: '+yr+' (facilitator only)';
+  document.getElementById('aEventNm').textContent=d.event;
+  document.getElementById('aRFd').textContent=fmtP(d.fd);
+  const re=document.getElementById('aREq');re.textContent=fmtP(d.eq);re.className='ret-val '+(d.eq>=0?'pos':'neg');
+  document.getElementById('aSYr').textContent='Yr '+round;
+  document.getElementById('aSRnd').textContent=round+'/20';
+  document.getElementById('aCovidZone').classList.toggle('active',yr===2020);
+  aPreviewYear(yr);
+}
+
+function aUpdateControls(){
+  const isOpen=aStatus==='round_open',isLocked=aStatus==='round_locked';
+  const isCovid=['covid_crisis','covid_abyss','covid_vaccine'].includes(aStatus);
+  const yr=YEARS[aYearIdx];
+  document.getElementById('aBtnOpen').disabled=isOpen||isCovid;
+  document.getElementById('aBtnLock').disabled=!isOpen||(yr===2020);
+  document.getElementById('aBtnNext').disabled=!isLocked&&aStatus!=='covid_vaccine';
+  document.getElementById('aBtnCrisis').disabled=!(yr===2020&&isOpen);
+  document.getElementById('aBtnAbyss').disabled=aStatus!=='covid_crisis';
+  document.getElementById('aBtnVaccine').disabled=aStatus!=='covid_abyss';
+}
+
+async function aOpenRound(){
+  const nextIdx=aYearIdx+1;if(nextIdx>=YEARS.length){showToast('All years done!',true);return;}
+  aYearIdx=nextIdx;const yr=YEARS[aYearIdx];
+  await db.from('game_sessions').update({status:'round_open',current_year:yr,current_year_index:aYearIdx,round_started_at:new Date().toISOString()}).eq('room_code',SESSION_ID);
+  await db.from('players').update({allocation_submitted:false}).eq('room_code',SESSION_ID);
+  aStatus='round_open';aUpdateYearDisplay();aUpdateTimeline();aUpdateControls();
+  if(yr!==2020) aStartRoundTimer(); // COVID year handled manually
+  showToast('Round opened: Year '+(aYearIdx+1));
+}
+async function aLockRound(){
+  aStopRoundTimer();
+  await db.from('game_sessions').update({status:'round_locked'}).eq('room_code',SESSION_ID);
+  aStatus='round_locked';aUpdateControls();showToast('Allocations locked');
+}
+async function aNextYear(){if(aYearIdx>=YEARS.length-1){aEndGame();return;}aOpenRound();}
+async function aTriggerCrisis(){
+  await db.from('game_sessions').update({status:'covid_crisis'}).eq('room_code',SESSION_ID);
+  aStatus='covid_crisis';aUpdateControls();showToast('💥 COVID crash triggered!');
+}
+async function aTriggerAbyss(){
+  await db.from('game_sessions').update({status:'covid_abyss'}).eq('room_code',SESSION_ID);
+  aStatus='covid_abyss';aUpdateControls();showToast('📉 Abyss triggered');
+}
+async function aTriggerVaccine(){
+  await db.from('game_sessions').update({status:'covid_vaccine'}).eq('room_code',SESSION_ID);
+  aStatus='covid_vaccine';aUpdateControls();showToast('💉 Vaccine recovery!');
+  setTimeout(()=>aUpdateControls(),1000);
+}
+async function aEndGame(){
+  await db.from('game_sessions').update({status:'game_over'}).eq('room_code',SESSION_ID);
+  aStatus='game_over';aUpdateControls();clearInterval(aRefInt);showToast('Game over!');aRefresh();
+}
+
+// RESET — wipes all players, resets session to start
+function showResetModal(){document.getElementById('resetModal').classList.add('show');}
+function hideResetModal(){document.getElementById('resetModal').classList.remove('show');}
+async function aResetGame(){
+  hideResetModal();
+  aStopRoundTimer();
+  await db.from('players').delete().eq('room_code',SESSION_ID);
+  await db.from('game_sessions').update({status:'waiting',current_year:null,current_year_index:-1,round_started_at:null}).eq('room_code',SESSION_ID);
+  aYearIdx=-1;aStatus='waiting';
+  aUpdateYearDisplay();aUpdateTimeline();aUpdateControls();aRefresh();
+  showToast('Game reset — ready for new session');
+}
+
+async function aRefresh(){
+  const {data}=await db.from('players').select('*').eq('room_code',SESSION_ID).order('portfolio_value',{ascending:false});
+  if(!data) return;
+  document.getElementById('aSPl').textContent=data.length;
+  document.getElementById('aPCardCnt').textContent=data.length+' players';
+  const sub=data.filter(p=>p.allocation_submitted).length;
+  const cd=data.filter(p=>p.crisis_decision).length;
+  document.getElementById('aSSub').textContent=sub+'/'+data.length;
+  const bar=document.getElementById('aSubBar');bar.innerHTML='';
+  data.forEach(p=>{
+    const dot=document.createElement('div');
+    dot.className='sub-dot'+(p.crisis_decision?' crisis-d':p.allocation_submitted?' done':'');
+    dot.title=p.name+(p.crisis_decision?' ('+p.crisis_decision+')':'');
+    bar.appendChild(dot);
+  });
+  const cnt=document.createElement('span');cnt.className='sub-count';
+  cnt.textContent=sub+'/'+data.length+' confirmed'+(cd?' · '+cd+' crisis decisions':'');
+  bar.appendChild(cnt);
+  aRenderLb(data);aRenderCards(data);
+}
+
+function aRenderLb(data){
+  const tb=document.getElementById('aLbBody');tb.innerHTML='';
+  data.forEach((p,i)=>{
+    const rank=i+1,tot=((p.portfolio_value-1000000)/1000000)*100,sharpe=calcSharpe(p.history);
+    const rc=rank===1?'g':rank===2?'s':rank===3?'b':'',tc=tot>=0?'pos':'neg';
+    const cb=p.crisis_decision?`<span class="crisis-badge">${p.crisis_decision}</span>`:'';
+    const tr=document.createElement('tr');
+    const aA=avgAlloc(p.history);
+    tr.innerHTML=`<td><span class="lb-rank ${rc}">${rank}</span></td><td class="lb-name">${p.name}${cb}</td><td class="lb-val">${fmt(p.portfolio_value)}</td><td class="lb-ret ${tc}">${fmtP(tot)}</td><td class="lb-sharpe">${sharpe||'—'}</td><td><div class="mini-bar"><div class="mfd" style="width:${aA.fd}%"></div><div class="meq" style="width:${aA.eq}%"></div></div><div class="alloc-txt">avg FD ${aA.fd}% / EQ ${aA.eq}%</div></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function aRenderCards(data){
+  const grid=document.getElementById('aPCardGrid');grid.innerHTML='';
+  data.forEach(p=>{
+    const tot=((p.portfolio_value-1000000)/1000000)*100;
+    const cls='pcard'+(p.crisis_decision?' crisis-done':p.allocation_submitted?' submitted':'');
+    const div=document.createElement('div');div.className=cls;
+    const aA=avgAlloc(p.history);
+    div.innerHTML=`<div class="check">${p.crisis_decision?'💥':p.allocation_submitted?'✓':''}</div><div class="pn">${p.name}</div><div class="pv">${fmt(p.portfolio_value)}</div><div class="pb"><div class="pfd" style="width:${aA.fd}%"></div><div class="peq" style="width:${aA.eq}%"></div></div><div class="pa">avg FD ${aA.fd}% · EQ ${aA.eq}% · <span class="${tot>=0?'pos':'neg'}">${fmtP(tot)}</span></div>${p.crisis_decision?`<div class="pa" style="color:#ff6b35;margin-top:.2rem">Crisis: ${p.crisis_decision}</div>`:''}`;
+    grid.appendChild(div);
+  });
+}
+
+function aSubscribeAdmin(){
+  db.channel('admin_s_'+SESSION_ID)
+    .on('postgres_changes',{event:'*',schema:'public',table:'players',filter:`room_code=eq.${SESSION_ID}`},()=>aRefresh())
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'game_sessions',filter:`room_code=eq.${SESSION_ID}`},p=>{aStatus=p.new.status;aUpdateControls();})
+    .subscribe();
+}
+
+// ═══════════════════════════
+// TV LEADERBOARD
+// Auto-connects, no input needed
+// ═══════════════════════════
+let tvMaxVal=1000000,tvCrisisInt=null,tvRoundTimer=null,tvRoundSecs=0;
+
+function tvStartRoundTimer(startedAt){
+  tvStopRoundTimer();
+  // Calculate remaining seconds based on server timestamp
+  const elapsed=startedAt?Math.floor((Date.now()-new Date(startedAt).getTime())/1000):0;
+  tvRoundSecs=Math.max(0,60-elapsed);
+  const bar=document.getElementById('tvTimerFill');
+  const lbl=document.getElementById('tvTimerLabel');
+  const barWrap=document.getElementById('tvTimerBar');
+  barWrap.style.display='block'; lbl.style.display='block';
+  function update(){
+    const pct=(tvRoundSecs/60)*100;
+    bar.style.width=pct+'%';
+    bar.className='round-timer-fill'+(tvRoundSecs<=15?' urgent':'');
+    lbl.textContent=tvRoundSecs+'s';
+    lbl.className='round-timer-label'+(tvRoundSecs<=15?' urgent':'');
+  }
+  update();
+  tvRoundTimer=setInterval(()=>{
+    tvRoundSecs=Math.max(0,tvRoundSecs-1);
+    update();
+    if(tvRoundSecs<=0) tvStopRoundTimer();
+  },1000);
+}
+
+function tvStopRoundTimer(){
+  if(tvRoundTimer){clearInterval(tvRoundTimer);tvRoundTimer=null;}
+  document.getElementById('tvTimerBar').style.display='none';
+  document.getElementById('tvTimerLabel').style.display='none';
+}
+
+async function tvInit(){
+  const sess=await ensureSession();
+  if(!sess){
+    document.getElementById('tvYear').textContent='WAITING';
+    document.getElementById('tvEvent').textContent='No session found — facilitator must log in first';
+    setTimeout(tvInit,4000);return;
+  }
+  await tvHandleSession(sess);
+  await tvRefreshPlayers();
+  tvSubscribe();
+}
+
+function tvSubscribe(){
+  db.channel('tv_s_'+SESSION_ID)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'game_sessions',filter:`room_code=eq.${SESSION_ID}`},async p=>{await tvHandleSession(p.new);await tvRefreshPlayers();})
+    .on('postgres_changes',{event:'*',schema:'public',table:'players',filter:`room_code=eq.${SESSION_ID}`},()=>tvRefreshPlayers())
+    .subscribe();
+}
+
+async function tvHandleSession(sess){
+  const s=sess.status,yr=sess.current_year,round=sess.current_year_index+1;
+  if(yr){
+    document.getElementById('tvYear').textContent='YEAR '+round;
+    // FIX 2: Only reveal event name AFTER round is locked — never during allocation phase
+    const showEvent=s!=='round_open';
+    document.getElementById('tvEvent').textContent=showEvent?(DATA[yr]?.event||''):'Allocations open — make your decision';
+    document.getElementById('tvFtRound').innerHTML='Round: <span>'+round+' / 20</span>';
+  } else {
+    document.getElementById('tvYear').textContent='—';
+    document.getElementById('tvEvent').textContent='Waiting for facilitator to start...';
+  }
+  document.getElementById('tvRetBanner').classList.remove('show');
+  document.getElementById('tvCrisisBanner').classList.remove('show');
+  if(tvCrisisInt){clearInterval(tvCrisisInt);tvCrisisInt=null;}
+
+  // Timer: show during allocation phase, hide after lock
+  if(s==='round_open'&&yr!==2020){
+    tvStartRoundTimer(sess.round_started_at||null);
+  } else {
+    tvStopRoundTimer();
+  }
+
+  if(s==='round_open'&&sess.current_year_index>0){
+    const py=YEARS[sess.current_year_index-1],pd=DATA[py];
+    if(pd){
+      document.getElementById('tvRetBanner').classList.add('show');
+      document.getElementById('tvRbYear').textContent='Year '+sess.current_year_index+' Result';
+      document.getElementById('tvRbFd').textContent=fmtP(pd.fd);
+      const re=document.getElementById('tvRbEq');re.textContent=fmtP(pd.eq);re.className='rb-val '+(pd.eq>=0?'pos':'neg');
+      document.getElementById('tvRbHl').textContent=pd.after;
+    }
+  }
+  if(s==='covid_crisis'){
+    document.getElementById('tvCrisisBanner').classList.add('show');
+    document.getElementById('tvCbFlash').textContent='-20%';
+    document.getElementById('tvCbTitle').textContent='MARKETS IN FREEFALL — PANDEMIC DECLARED';
+    document.getElementById('tvCbSub').textContent='Players have 20 seconds to rebalance their portfolios...';
+    let t=20;document.getElementById('tvCbTimer').textContent=t+'s';
+    tvCrisisInt=setInterval(()=>{t--;document.getElementById('tvCbTimer').textContent=t+'s';if(t<=0){clearInterval(tvCrisisInt);}},1000);
+  }
+  if(s==='covid_abyss'){
+    document.getElementById('tvCrisisBanner').classList.add('show');
+    document.getElementById('tvCbFlash').textContent='-34%';
+    document.getElementById('tvCbTitle').textContent='MARKETS CONTINUE TO FALL — NO FLOOR IN SIGHT';
+    document.getElementById('tvCbSub').textContent='Circuit breakers triggered globally. Economists warn of a second Great Depression.';
+    document.getElementById('tvCbTimer').textContent='';
+  }
+  if(s==='covid_vaccine'){
+    document.getElementById('tvRetBanner').classList.add('show');
+    document.getElementById('tvRbYear').textContent='💉 VACCINE BREAKTHROUGH';
+    document.getElementById('tvRbFd').textContent='+3.5%';
+    const re=document.getElementById('tvRbEq');re.textContent='+15.9%';re.className='rb-val pos';
+    document.getElementById('tvRbHl').textContent='Pfizer announces vaccine results exceeding all expectations. Markets stage the fastest recovery in history. Full year: +15.9%.';
+  }
+  if(s==='game_over') tvShowGameOver();
+}
+
+async function tvRefreshPlayers(){
+  const {data}=await db.from('players').select('*').eq('room_code',SESSION_ID).order('portfolio_value',{ascending:false});
+  if(!data) return;
+  document.getElementById('tvFtPlayers').innerHTML='Players: <span>'+data.length+'</span>';
+  if(data.length>0) tvMaxVal=Math.max(...data.map(p=>p.portfolio_value),1000000);
+  tvRenderRows(data);
+}
+
+function tvRenderRows(data){
+  const main=document.getElementById('tvLbMain');main.innerHTML='';
+  data.slice(0,10).forEach((p,i)=>{
+    const rank=i+1,tot=((p.portfolio_value-1000000)/1000000)*100,sharpe=calcSharpe(p.history);
+    const rc=rank===1?'g':rank===2?'s':rank===3?'b':'',tc=tot>=0?'pos':'neg';
+    const growPct=Math.min((p.portfolio_value/tvMaxVal)*100,100);
+    const aA=avgAlloc(p.history);
+    const lastFd=p.fd_alloc, lastEq=p.eq_alloc;
+    const ct=p.crisis_decision?`<span class="crisis-tag">${p.crisis_decision}</span>`:'';
+    const row=document.createElement('div');row.className='lb-row'+(rank<=3?' r'+rank:'');
+    row.innerHTML=`<div class="row-rank ${rc}">${rank}</div><div class="row-name">${p.name}${ct}</div><div class="row-bar-wrap"><div class="row-track"><div class="row-fill" style="width:${growPct}%"></div></div></div><div class="row-alloc"><div class="row-alloc-bar"><div class="rab-fd" style="width:${aA.fd}%"></div><div class="rab-eq" style="width:${aA.eq}%"></div></div><div class="row-alloc-txt">avg FD ${aA.fd}% · EQ ${aA.eq}%</div><div class="row-alloc-txt" style="color:var(--text-dim);opacity:.6">last FD ${lastFd}% · EQ ${lastEq}%</div></div><div class="row-sharpe">${sharpe||'—'}</div><div class="row-return ${tc}">${fmtP(tot)}</div><div class="row-value">${fmt(p.portfolio_value)}</div>`;
+    main.appendChild(row);
+  });
+}
+
+async function tvShowGameOver(){
+  const {data}=await db.from('players').select('*').eq('room_code',SESSION_ID).order('portfolio_value',{ascending:false});
+  if(!data||!data.length) return;
+  const winner=data[0],winTot=((winner.portfolio_value-1000000)/1000000)*100;
+  const withSharpe=data.map(p=>({...p,sh:+calcSharpe(p.history)||0})).sort((a,b)=>b.sh-a.sh);
+  const sw=withSharpe[0];
+  document.getElementById('tvGoRetW').textContent=winner.name;
+  document.getElementById('tvGoRetV').textContent=fmt(winner.portfolio_value);
+  document.getElementById('tvGoRetP').textContent=fmtP(winTot)+' total return';
+  document.getElementById('tvGoSharpeW').textContent=sw.name;
+  document.getElementById('tvGoSharpeV').textContent='Sharpe: '+sw.sh.toFixed(2);
+  document.getElementById('tvGoMsg').textContent='The highest portfolio delivered maximum absolute wealth — but the best Sharpe ratio delivered maximum return per unit of risk. In wealth management, we serve clients across their entire journey. A smoother ride means they stay invested. That is exactly what a diversified global equity mandate does.';
+  document.getElementById('tvGameOver').classList.add('show');
+}
+
+// ═══════════════════════════
+// SOUND ENGINE v2 — Web Audio API
+// Fully synthesised, no external files
+// ═══════════════════════════
+let audioCtx=null;
+function getCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playYearSound(eqReturn){
+  if(eqReturn<=-15)      playSound('bigCrash');
+  else if(eqReturn<0)    playSound('smallCrash');
+  else if(eqReturn>=20)  playSound('bigWin');
+  else if(eqReturn>=8)   playSound('goodYear');
+  else                   playSound('flatYear');
+}
+
+function playSound(type){
+  try{
+    const ctx=getCtx();
+    const master=ctx.createGain();
+    master.gain.value=0.85;
+    master.connect(ctx.destination);
+    const t=ctx.currentTime;
+
+    // ── helper: creates one oscillator node ──
+    function osc(type,freq,startT,stopT,gainPeak,peakT,releaseT,dest){
+      const o=ctx.createOscillator();
+      const g=ctx.createGain();
+      o.type=type; o.frequency.value=freq;
+      g.gain.setValueAtTime(0,startT);
+      g.gain.linearRampToValueAtTime(gainPeak,peakT);
+      g.gain.linearRampToValueAtTime(0,releaseT);
+      o.connect(g); g.connect(dest||master);
+      o.start(startT); o.stop(stopT);
+      return o;
+    }
+
+    // ── helper: noise burst ──
+    function noise(startT,dur,gainVal,dest){
+      const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
+      const src=ctx.createBufferSource();
+      const g=ctx.createGain();
+      const filt=ctx.createBiquadFilter();
+      filt.type='lowpass'; filt.frequency.value=400;
+      src.buffer=buf;
+      g.gain.setValueAtTime(gainVal,startT);
+      g.gain.linearRampToValueAtTime(0,startT+dur);
+      src.connect(filt); filt.connect(g); g.connect(dest||master);
+      src.start(startT); src.stop(startT+dur);
+    }
+
+    switch(type){
+
+      // ════════════════════════════════════════
+      // BIG CRASH — 2008 / 2022
+      // Cinematic collapse: siren drop + structural rumble + glass shatter
+      // ════════════════════════════════════════
+      case 'bigCrash':{
+        // Siren-style descending sweep
+        const sweep=ctx.createOscillator();
+        const sweepG=ctx.createGain();
+        sweep.type='sawtooth';
+        sweep.frequency.setValueAtTime(880,t);
+        sweep.frequency.exponentialRampToValueAtTime(55,t+2.5);
+        sweepG.gain.setValueAtTime(0,t);
+        sweepG.gain.linearRampToValueAtTime(0.35,t+0.1);
+        sweepG.gain.linearRampToValueAtTime(0.28,t+2.0);
+        sweepG.gain.linearRampToValueAtTime(0,t+2.8);
+        sweep.connect(sweepG); sweepG.connect(master);
+        sweep.start(t); sweep.stop(t+2.9);
+
+        // Distortion via waveshaper
+        const waveShaper=ctx.createWaveShaper();
+        const curve=new Float32Array(256);
+        for(let i=0;i<256;i++){const x=i*2/256-1; curve[i]=Math.sign(x)*Math.pow(Math.abs(x),.4);}
+        waveShaper.curve=curve;
+        sweepG.connect(waveShaper); waveShaper.connect(master);
+
+        // Sub bass boom
+        const boom=ctx.createOscillator(), boomG=ctx.createGain();
+        boom.type='sine'; boom.frequency.setValueAtTime(80,t);
+        boom.frequency.exponentialRampToValueAtTime(25,t+1.8);
+        boomG.gain.setValueAtTime(0,t); boomG.gain.linearRampToValueAtTime(0.7,t+0.05);
+        boomG.gain.exponentialRampToValueAtTime(0.001,t+2.2);
+        boom.connect(boomG); boomG.connect(master);
+        boom.start(t); boom.stop(t+2.2);
+
+        // Stacked impact thuds
+        [0, 0.08, 0.18].forEach((dt,i)=>{
+          const imp=ctx.createOscillator(), impG=ctx.createGain();
+          imp.type='sine'; imp.frequency.setValueAtTime(120-i*20,t+dt);
+          imp.frequency.exponentialRampToValueAtTime(30,t+dt+0.3);
+          impG.gain.setValueAtTime(0.5-i*0.1,t+dt);
+          impG.gain.exponentialRampToValueAtTime(0.001,t+dt+0.35);
+          imp.connect(impG); impG.connect(master);
+          imp.start(t+dt); imp.stop(t+dt+0.4);
+        });
+
+        // High frequency crack / shatter
+        noise(t, 0.15, 0.4);
+        noise(t+0.05, 0.08, 0.25);
+
+        // Eerie dissonant chord at the end
+        [110, 116.5, 123.5].forEach((f,i)=>{
+          osc('sine',f,t+1.8,t+3.5, 0.12, t+2.0, t+3.5);
+        });
+        break;
+      }
+
+      // ════════════════════════════════════════
+      // SMALL CRASH — mild down year (2011, 2015, 2018)
+      // Descending sombre tones — disappointed, not catastrophic
+      // ════════════════════════════════════════
+      case 'smallCrash':{
+        // Descending minor phrase
+        [[392,0],[349,0.22],[311,0.44],[261,0.68]].forEach(([f,dt])=>{
+          osc('triangle',f,t+dt,t+dt+0.55, 0.18, t+dt+0.03, t+dt+0.55);
+          osc('sine',f*0.5,t+dt,t+dt+0.55, 0.08, t+dt+0.03, t+dt+0.55);
+        });
+        // Low weight
+        const thud=ctx.createOscillator(), thudG=ctx.createGain();
+        thud.type='sine'; thud.frequency.setValueAtTime(90,t+0.6);
+        thud.frequency.exponentialRampToValueAtTime(40,t+1.0);
+        thudG.gain.setValueAtTime(0.3,t+0.6);
+        thudG.gain.exponentialRampToValueAtTime(0.001,t+1.1);
+        thud.connect(thudG); thudG.connect(master);
+        thud.start(t+0.6); thud.stop(t+1.2);
+        break;
+      }
+
+      // ════════════════════════════════════════
+      // BIG WIN — 20%+ year (2006, 2009, 2013, 2017, 2019, 2021, 2023, 2025)
+      // Full orchestral fanfare — triumph, momentum, celebration
+      // ════════════════════════════════════════
+      case 'bigWin':{
+        // Brass-like attack chord
+        const brassFreqs=[261,329,392,523];
+        brassFreqs.forEach(f=>{
+          const o=ctx.createOscillator(), g=ctx.createGain();
+          const dist=ctx.createWaveShaper();
+          const c=new Float32Array(256);
+          for(let i=0;i<256;i++){const x=i*2/256-1; c[i]=Math.tanh(x*2.5)*0.7;}
+          dist.curve=c;
+          o.type='sawtooth'; o.frequency.value=f;
+          g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.18,t+0.04);
+          g.gain.linearRampToValueAtTime(0.12,t+0.4); g.gain.linearRampToValueAtTime(0,t+0.7);
+          o.connect(dist); dist.connect(g); g.connect(master);
+          o.start(t); o.stop(t+0.75);
+        });
+
+        // Rising arpeggio
+        [[523,0.15],[659,0.28],[784,0.41],[1047,0.56],[1319,0.72],[1568,0.9]].forEach(([f,dt])=>{
+          osc('sine',f, t+dt, t+dt+0.5, 0.22, t+dt+0.02, t+dt+0.5);
+          osc('triangle',f*2, t+dt, t+dt+0.25, 0.06, t+dt+0.02, t+dt+0.25);
+        });
+
+        // Triumphant sustained chord
+        [523,659,784,1047].forEach((f,i)=>{
+          osc('sine',f, t+1.1, t+2.5, 0.15, t+1.2, t+2.5);
+        });
+
+        // Sparkle top layer
+        [2093,2637,3136,4186].forEach((f,i)=>{
+          osc('sine',f, t+0.9+i*0.07, t+0.9+i*0.07+0.3, 0.07, t+0.9+i*0.07+0.01, t+0.9+i*0.07+0.3);
+        });
+
+        // Punch noise at start
+        noise(t, 0.06, 0.3);
+        break;
+      }
+
+      // ════════════════════════════════════════
+      // GOOD YEAR — 8 to 19% (most normal up years)
+      // Warm upbeat resolution — satisfying, positive
+      // ════════════════════════════════════════
+      case 'goodYear':{
+        // Clean ascending major arpeggio
+        [[392,0],[494,0.14],[587,0.28],[784,0.44],[988,0.6]].forEach(([f,dt])=>{
+          osc('sine',f, t+dt, t+dt+0.55, 0.2, t+dt+0.02, t+dt+0.55);
+          osc('triangle',f, t+dt, t+dt+0.3, 0.06, t+dt+0.02, t+dt+0.3);
+        });
+        // Warm pad underneath
+        [196,247,294].forEach(f=>{
+          osc('sine',f, t+0.1, t+1.2, 0.08, t+0.3, t+1.2);
+        });
+        break;
+      }
+
+      // ════════════════════════════════════════
+      // FLAT YEAR — 0 to 7% (muted positive)
+      // Understated — a gentle acknowledgment
+      // ════════════════════════════════════════
+      case 'flatYear':{
+        [[440,0],[494,0.2],[440,0.4]].forEach(([f,dt])=>{
+          osc('sine',f, t+dt, t+dt+0.35, 0.12, t+dt+0.02, t+dt+0.35);
+        });
+        break;
+      }
+
+      // ════════════════════════════════════════
+      // COVID -20% CRASH ALARM
+      // Urgent pulsing klaxon — panic in real time
+      // ════════════════════════════════════════
+      case 'crash':{
+        // Klaxon — alternating two-tone alarm
+        for(let i=0;i<8;i++){
+          const f=i%2===0?880:660;
+          const o=ctx.createOscillator(), g=ctx.createGain();
+          const dist=ctx.createWaveShaper();
+          const c=new Float32Array(256);
+          for(let j=0;j<256;j++){const x=j*2/256-1; c[j]=Math.sign(x)*Math.pow(Math.abs(x),0.3);}
+          dist.curve=c;
+          o.type='square'; o.frequency.value=f;
+          g.gain.setValueAtTime(0.25,t+i*0.18);
+          g.gain.linearRampToValueAtTime(0,t+i*0.18+0.16);
+          o.connect(dist); dist.connect(g); g.connect(master);
+          o.start(t+i*0.18); o.stop(t+i*0.18+0.18);
+        }
+        // Underlying panic bass pulse
+        for(let i=0;i<4;i++){
+          const b=ctx.createOscillator(), bg=ctx.createGain();
+          b.type='sine'; b.frequency.value=60;
+          bg.gain.setValueAtTime(0.4,t+i*0.36);
+          bg.gain.exponentialRampToValueAtTime(0.001,t+i*0.36+0.3);
+          b.connect(bg); bg.connect(master);
+          b.start(t+i*0.36); b.stop(t+i*0.36+0.32);
+        }
+        break;
+      }
+
+      // ════════════════════════════════════════
+      // COVID -34% ABYSS — watch only
+      // Dark, oppressive, no escape — deep drone with dissonance
+      // ════════════════════════════════════════
+      case 'abyss':{
+        // Sub-bass drone — wall of darkness
+        [41, 43.7, 46.2].forEach((f,i)=>{
+          const o=ctx.createOscillator(), g=ctx.createGain();
+          o.type='sawtooth'; o.frequency.value=f;
+          g.gain.setValueAtTime(0,t);
+          g.gain.linearRampToValueAtTime(0.22,t+0.8);
+          g.gain.linearRampToValueAtTime(0.18,t+2.5);
+          g.gain.linearRampToValueAtTime(0,t+3.5);
+          o.connect(g); g.connect(master);
+          o.start(t); o.stop(t+3.6);
+        });
+
+        // Unsettling high shimmer
+        [880,932,988].forEach((f,i)=>{
+          const o=ctx.createOscillator(), g=ctx.createGain();
+          o.type='sine'; o.frequency.value=f;
+          // Tremolo via LFO
+          const lfo=ctx.createOscillator(), lfoG=ctx.createGain();
+          lfo.frequency.value=5+i; lfoG.gain.value=0.04;
+          lfo.connect(lfoG); lfoG.connect(g.gain);
+          g.gain.setValueAtTime(0,t+0.5);
+          g.gain.linearRampToValueAtTime(0.05,t+1.2);
+          g.gain.linearRampToValueAtTime(0,t+3.5);
+          o.connect(g); g.connect(master);
+          lfo.start(t); lfo.stop(t+3.6);
+          o.start(t+0.5); o.stop(t+3.6);
+        });
+
+        // Heavy impact at start
+        const imp=ctx.createOscillator(), impG=ctx.createGain();
+        imp.type='sine'; imp.frequency.setValueAtTime(120,t);
+        imp.frequency.exponentialRampToValueAtTime(25,t+0.6);
+        impG.gain.setValueAtTime(0.6,t); impG.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+        imp.connect(impG); impG.connect(master);
+        imp.start(t); imp.stop(t+0.75);
+        noise(t, 0.1, 0.35);
+        break;
+      }
+
+      // ════════════════════════════════════════
+      // VACCINE RECOVERY — hope returns
+      // Starts fragile, swells into triumph
+      // ════════════════════════════════════════
+      case 'vaccine':{
+        // Gentle opening — single note of hope
+        osc('sine',392, t, t+0.8, 0.15, t+0.1, t+0.8);
+
+        // Building arpeggio — gathering momentum
+        [[392,0.5],[494,0.7],[587,0.9],[698,1.1],[784,1.3]].forEach(([f,dt])=>{
+          osc('sine',f, t+dt, t+dt+0.6, 0.2, t+dt+0.03, t+dt+0.6);
+          osc('triangle',f, t+dt, t+dt+0.3, 0.07, t+dt+0.03, t+dt+0.3);
+        });
+
+        // Full triumphant resolution
+        [523,659,784,1047,1319].forEach((f,i)=>{
+          osc('sine',f, t+1.7, t+3.2, 0.16, t+1.8, t+3.2);
+        });
+
+        // Shimmer top
+        [2093,2637,3136].forEach((f,i)=>{
+          osc('sine',f, t+1.9+i*0.1, t+1.9+i*0.1+0.4, 0.06, t+1.9+i*0.1+0.02, t+1.9+i*0.1+0.4);
+        });
+
+        // Low warmth underneath
+        [130,164,196].forEach(f=>{
+          osc('sine',f, t+1.5, t+3.2, 0.1, t+1.8, t+3.2);
+        });
+        break;
+      }
+    }
+  } catch(e){ /* silent fail if audio blocked */ }
+}
+</script>
+</body>
+</html>
