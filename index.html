@@ -945,7 +945,7 @@ async function pApplyCovidLeg(leg){
   }
   if(leg==='vaccine'){
     const eqP=newV*(eqA/100),fdP=newV*(fdA/100);
-    newV=fdP*(1+DATA[2020].fd/100)+eqP*(1.159/0.66);
+    newV=fdP*(1+DATA[2020].fd/100)+eqP*(1.1626/0.66); // 1.1626 = ACWI 2020 full year, 0.66 = trough level
   }
   pPortfolio=newV;
   const h=[...(pl.history||[])];
