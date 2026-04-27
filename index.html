@@ -478,12 +478,45 @@ input[type=range]{position:absolute;top:50%;transform:translateY(-50%);left:0;wi
   <div class="crisis-label">MARKETS IN FREEFALL</div>
   <div class="crisis-flash">-20%</div>
   <div class="crisis-headline">PANDEMIC DECLARED. COVID-19 spreading across every continent. Borders closing. Economies shutting down.</div>
-  <div class="crisis-sub">Your equity portfolio has just lost 20%. Do you want to rebalance?</div>
+  <div class="crisis-sub">Your equity portfolio has just lost 20%. Set your new allocation below, then tap Rebalance — or Hold to keep your current split.</div>
+
+  <!-- Inline sliders so players can actually rebalance -->
+  <div style="width:100%;max-width:340px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.9rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:.4rem;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--fd)"></div>Fixed Deposit
+      </div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--gold)" id="cFdPct">50%</div>
+    </div>
+    <div style="position:relative;height:6px;background:rgba(255,255,255,.1);border-radius:3px;">
+      <div id="cFdFill" style="height:100%;border-radius:3px;background:var(--fd);width:50%;transition:width .12s;"></div>
+      <input type="range" id="cFdSlider" min="0" max="100" value="50" step="5"
+        style="position:absolute;top:50%;transform:translateY(-50%);left:0;width:100%;opacity:0;cursor:pointer;height:28px;margin:0;"
+        oninput="cSlider('fd')">
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:.4rem;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--eq)"></div>Global Equities
+      </div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--gold)" id="cEqPct">50%</div>
+    </div>
+    <div style="position:relative;height:6px;background:rgba(255,255,255,.1);border-radius:3px;">
+      <div id="cEqFill" style="height:100%;border-radius:3px;background:var(--eq);width:50%;transition:width .12s;"></div>
+      <input type="range" id="cEqSlider" min="0" max="100" value="50" step="5"
+        style="position:absolute;top:50%;transform:translateY(-50%);left:0;width:100%;opacity:0;cursor:pointer;height:28px;margin:0;"
+        oninput="cSlider('eq')">
+    </div>
+    <!-- Split bar -->
+    <div style="height:28px;border-radius:8px;overflow:hidden;display:flex;">
+      <div id="cSplitFd" style="background:var(--fd);width:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;color:white;transition:width .2s;">FD 50%</div>
+      <div id="cSplitEq" style="background:var(--eq);width:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;color:#0a0a0f;transition:width .2s;">EQ 50%</div>
+    </div>
+  </div>
+
   <div class="crisis-timer-lbl">Time to decide</div>
   <div class="crisis-timer" id="pCrisisTimer">20</div>
-  <button class="btn-gold" id="pRebalBtn" onclick="pCrisisRebalance()" style="max-width:320px">REBALANCE NOW</button>
-  <button class="btn-red" id="pHoldBtn" onclick="pHoldPosition()">HOLD — STAY THE COURSE</button>
-  <div style="font-size:.72rem;color:var(--text-dim);max-width:280px;line-height:1.5" id="pCrisisAllocDisp"></div>
+  <button class="btn-gold" id="pRebalBtn" onclick="pCrisisRebalance()" style="max-width:340px">REBALANCE NOW</button>
+  <button class="btn-red" id="pHoldBtn" onclick="pHoldPosition()" style="max-width:340px">HOLD — STAY THE COURSE</button>
 </div>
 <div id="covidAbyss" class="covid-overlay">
   <div class="abyss-lbl">MARKETS CONTINUE TO FALL</div>
@@ -989,10 +1022,31 @@ async function pSubmitAlloc(){
   showToast('Allocation confirmed!');
 }
 
+// Slider function for crisis overlay
+function cSlider(changed){
+  const fs=document.getElementById('cFdSlider'),es=document.getElementById('cEqSlider');
+  let fd,eq;
+  if(changed==='fd'){fd=+fs.value;eq=100-fd;es.value=eq;}
+  else{eq=+es.value;fd=100-eq;fs.value=fd;}
+  document.getElementById('cFdPct').textContent=fd+'%';
+  document.getElementById('cEqPct').textContent=eq+'%';
+  document.getElementById('cFdFill').style.width=fd+'%';
+  document.getElementById('cEqFill').style.width=eq+'%';
+  const sf=document.getElementById('cSplitFd'),se=document.getElementById('cSplitEq');
+  sf.style.width=fd+'%'; sf.textContent=fd>14?'FD '+fd+'%':'';
+  se.style.width=eq+'%'; se.textContent=eq>14?'EQ '+eq+'%':'';
+  // Keep local vars in sync so pCrisisRebalance reads them
+  window._crisisFd=fd; window._crisisEq=eq;
+}
+
 function pStartCrisis(){
   pCrisisDecided=false;let t=20;
+  // Seed crisis sliders with player's current allocation
+  document.getElementById('cFdSlider').value=pFdAlloc;
+  document.getElementById('cEqSlider').value=pEqAlloc;
+  window._crisisFd=pFdAlloc; window._crisisEq=pEqAlloc;
+  cSlider('fd'); // renders the sliders correctly
   document.getElementById('pCrisisTimer').textContent=t;
-  document.getElementById('pCrisisAllocDisp').textContent=`Current: FD ${pFdAlloc}% / EQ ${pEqAlloc}% — Adjust sliders then tap Rebalance, or Hold`;
   document.getElementById('covidCrisis').classList.add('show');
   document.getElementById('pRebalBtn').disabled=false;document.getElementById('pHoldBtn').disabled=false;
   pCrisisTimer=setInterval(async()=>{
@@ -1005,10 +1059,24 @@ async function pCrisisRebalance(){
   if(pCrisisDecided) return;
   pCrisisDecided=true;clearInterval(pCrisisTimer);
   document.getElementById('pRebalBtn').disabled=true;document.getElementById('pHoldBtn').disabled=true;
+  // Read from CRISIS sliders, not the main game sliders
+  const newFd=window._crisisFd!==undefined?window._crisisFd:pFdAlloc;
+  const newEq=window._crisisEq!==undefined?window._crisisEq:pEqAlloc;
   const {data:pl}=await db.from('players').select('*').eq('id',pPlayerId).single();
+  // Apply -20% to the ORIGINAL equity allocation before rebalance
   const afterCrash=pl.portfolio_value*(pl.fd_alloc/100)+pl.portfolio_value*(pl.eq_alloc/100)*0.80;
-  await db.from('players').update({portfolio_value:afterCrash,crisis_fd_alloc:pFdAlloc,crisis_eq_alloc:pEqAlloc,crisis_decision:'rebalanced',allocation_submitted:true}).eq('id',pPlayerId);
-  pPortfolio=afterCrash;showToast('Rebalance saved!');
+  await db.from('players').update({
+    portfolio_value:afterCrash,
+    crisis_fd_alloc:newFd,
+    crisis_eq_alloc:newEq,
+    fd_alloc:newFd,
+    eq_alloc:newEq,
+    crisis_decision:'rebalanced',
+    allocation_submitted:true
+  }).eq('id',pPlayerId);
+  pPortfolio=afterCrash;
+  pFdAlloc=newFd; pEqAlloc=newEq;
+  showToast('Rebalanced: FD '+newFd+'% / EQ '+newEq+'%');
   document.getElementById('covidCrisis').classList.remove('show');
 }
 
