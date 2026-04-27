@@ -1059,7 +1059,7 @@ async function pShowGameOver(){
 // ═══════════════════════════
 let aYearIdx=-1,aStatus='waiting',aRefInt=null;
 let aRoundTimer=null,aRoundTimerSecs=0;
-const ROUND_DURATION=60; // seconds per round
+const ROUND_DURATION=120; // seconds per round
 
 function aStartRoundTimer(){
   aStopRoundTimer();
@@ -1272,13 +1272,13 @@ function tvStartRoundTimer(startedAt){
   tvStopRoundTimer();
   // Calculate remaining seconds based on server timestamp
   const elapsed=startedAt?Math.floor((Date.now()-new Date(startedAt).getTime())/1000):0;
-  tvRoundSecs=Math.max(0,60-elapsed);
+  tvRoundSecs=Math.max(0,120-elapsed);
   const bar=document.getElementById('tvTimerFill');
   const lbl=document.getElementById('tvTimerLabel');
   const barWrap=document.getElementById('tvTimerBar');
   barWrap.style.display='block'; lbl.style.display='block';
   function update(){
-    const pct=(tvRoundSecs/60)*100;
+    const pct=(tvRoundSecs/120)*100;
     bar.style.width=pct+'%';
     bar.className='round-timer-fill'+(tvRoundSecs<=15?' urgent':'');
     lbl.textContent=tvRoundSecs+'s';
